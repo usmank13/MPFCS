@@ -6,184 +6,201 @@ Created on Tue Feb 11 15:31:45 2020
 @author: chasewhyte
 """
 from VNAConfig import *
+import numpy as np
+import serial
+import time
+import random
+import visa
+from tkinter import *
+from tkinter import messagebox
+from tkinter import ttk
+from mpl_toolkits import mplot3d
+import matplotlib.pyplot as plt 
+from matplotlib import cm
+from matplotlib import colors
+from matplotlib.ticker import FuncFormatter
+
+def VNAreset(reset_VNA,submit_val,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt08,txt09,txt10,txt11):
+    reset_VNA.configure(state = 'disabled')
+    submit_val.configure(state = "normal")
+    txt00.configure(state = 'normal')
+    txt02.configure(state = 'normal')
+    txt03.configure(state = 'normal')
+    txt04.configure(state = 'normal')
+    txt01.configure(state = 'normal')
+    txt05.configure(state = 'normal')
+    # txt06.configure(state = 'normal')
+    txt07.configure(state = 'normal')
+    txt08.configure(state = 'normal')
+    txt09.configure(state = 'normal')
+    txt10.configure(state = 'normal')
+    txt11.configure(state = 'normal')
 
 
-def VNAreset():
-	submit_val.configure(state = "normal")
-	txt00.configure(state = 'normal')
-	txt01.configure(state = 'normal')
-	txt02.configure(state = 'normal')
-	txt03.configure(state = 'normal')
-	txt04.configure(state = 'normal')
-	txt05.configure(state = 'normal')
-	# txt06.configure(state = 'normal')
-	txt07.configure(state = 'normal')
-	txt08.configure(state = 'normal')
-	txt09.configure(state = 'normal')
-	txt10.configure(state = 'normal')
-	txt11.configure(state = 'normal')
-	reset_VNA.configure(state = 'disabled')
+def run_vna(reset_VNA,start_btn,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt08,txt09,txt10,txt11, MPCNC):
+    reset_VNA.configure(state = 'disabled')
+    start_btn.configure(state = 'disabled')
+    #getting user inputs
+    length = int(txt00.get())
+    print("Length: " + str(length))
+    width = int(txt01.get())
+    print("Width: " + str(width))
+    PauseDur = int(txt02.get())
+    xStep = int(txt03.get())
+    yStep = int(txt04.get())
+    depth = int(txt05.get())
+    print("Depth: " + str(depth))
+    # sParam = txt06.get()
+    center_freq = float(txt07.get())
+    span = int(txt08.get())
+    num_points = int(txt09.get())
+    zStep = int(txt10.get())
+    txt_fileName = txt11.get() + ".txt"
+    then = time.time()
 
-def run_vna():
-	#getting user inputs
-	start_btn.configure(state = 'disabled')
-	length = int(txt00.get())
-	print("Length: " + length)
-	width = int(txt01.get())
-	print("Width: " + width)
-	PauseDur = int(txt02.get())
-	samplingF = int(txt03.get())
-	yStep = int(txt04.get())
-	depth = int(txt05.get())
-	print("Depth: " + depth)
-	# sParam = txt06.get()
-	center_freq = float(txt07.get())
-	span = int(txt08.get())
-	num_points = int(txt09.get())
-	zStep = int(txt10.get())
-	txt_fileName = txt11.get() + ".txt"
+    # initializing some values
+    sampling_x_coordinates = np.arange(0, width, xStep)
+    sampling_z_coordinates = np.arange(0, depth, zStep)
+    sampling_y_coordinates = np.arange(length, 0, -1*yStep)
+    s11 = np.array([])
+    s12 = np.array([])
+    s21 = np.array([])
+    s22 = np.array([])
+    x_coords = np.array([])
+    y_coords = np.array([])
+    z_coords = np.array([])
 
-	then = time.time()
-	
-	# initializing some values
-	numPoints = (samplingF * numRows * depth)
-	numRuns = 5 #number of runs 
-	numMeasurements = numPoints*numRuns #number of measurements over all runs
-	measurements = np.zeros((numMeasurements, 9))
-	measureIndex = 1
-	runNum = 1
-	
+    firstRun = 0;
 
-	#calculating estimated time to completion
-	# total time to visit all data points in seconds 
-	# totalDistance = depth(width*numRows + (numRows - 1)yStep)(numRows - 1)) +(depth - 1)
-	# expTime = PauseDur*numPoints + moveSpeed*(totalDistance)
-	# need moveSpeed, unless time between points is negligible 
+    numSamples = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
+    measurements = np.zeros((numSamples, 8))
+    measurementIndex = 0
+
+    # Initializing communication 
+    rm = visa.ResourceManager()
+    vna = rm.open_resource('GPIB0::16')
+    f = open(txt_fileName, "w")
+    ser1 = serial.Serial('COM49') # name of port, this might be different because of the hub we use
+    ser1.baudrate = 250000
+    print(ser1.name)
+
+    time.sleep(5) # time delay to give the machine time to initialize
+    vna_data = np.empty(numSamples) #array to hold a value for each sample
+
+    #initialize VNA
+    vna_init(num_points, vna)
+    g_planarWrite(0, 0, ser1) # to initialize position
+
+    #3D plots for s12, s11, s21, s22
+    sPlot=plt.figure(1)
+    sPlot.tight_layout(pad=3.0)
+    ax1 = sPlot.add_subplot(221, projection = '3d')
+    ax1.set_title('S11')
+    ax1.set_xlabel('X Position (mm)')
+    ax1.set_ylabel('Y Position (mm)')
+    ax1.set_zlabel('Z Position (mm)')
+
+    ax2 = sPlot.add_subplot(222, projection = '3d')
+    ax2.set_title('S12')
+    ax2.set_xlabel('X Position (mm)')
+    ax2.set_ylabel('Y Position (mm)')
+    ax2.set_zlabel('Z Position (mm)')
+    
+    ax3 = sPlot.add_subplot(223, projection = '3d')
+    ax3.set_title('S21')
+    ax3.set_xlabel('X Position (mm)')
+    ax3.set_ylabel('Y Position (mm)')
+    ax3.set_zlabel('Z Position (mm)')
+
+    ax4 = sPlot.add_subplot(224, projection = '3d')
+    ax4.set_title('S22')
+    ax4.set_xlabel('X Position (mm)')
+    ax4.set_ylabel('Y Position (mm)')
+    ax4.set_zlabel('Z Position (mm)')
+
+    for z_coord in sampling_z_coordinates: # for each z plane 
+        ser1.write(('\nG0 Z' + str(int(z_coord))).encode()) 
+        for y_coord in sampling_y_coordinates: # for each row
+            f.write("\n")
+            for x_coord in sampling_x_coordinates: # moves the tool to each successive sampling spot in the row
+                g_planarWrite(x_coord, y_coord, ser1) 
+                pause(PauseDur, ser1) 
+                time.sleep(3)
+
+                value = vna_record(num_points, 's11', vna) #magnitude value
+                value2 = vna_record(num_points, 's12', vna)
+                value3 = vna_record(num_points, 's21', vna)
+                value4 = vna_record(num_points, 's22', vna)
+                
+                print("s11: ", value, "\ns12: ", value2, "\ns21: ", value3, "\ns22: ", value4, "\n\n")
+                x_coords = np.concatenate([x_coords, np.array([x_coord])])
+                y_coords = np.concatenate([y_coords, np.array([y_coord])])
+                z_coords = np.concatenate([z_coords, np.array([z_coord])])
+
+                s11 = np.concatenate([s11, np.array([value])])
+                s12 = np.concatenate([s12, np.array([value2])])
+                s21 = np.concatenate([s21, np.array([value3])])
+                s22 = np.concatenate([s22, np.array([value4])])
+                #plotting 
+                if(firstRun != 0):
+                    colorbar1.remove()
+                    colorbar2.remove()
+                    colorbar3.remove()
+                    colorbar4.remove()
+            
+                ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11, cmap = 'jet')
+                colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
+                colorbar1.set_label('Decibels')
+
+                ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12, cmap = 'jet')
+                colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
+                colorbar2.set_label('Decibels')
+
+                ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21, cmap = 'jet')
+                colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
+                colorbar3.set_label('Decibels')
+                
+                ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22, cmap = 'jet')
+                colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
+                colorbar4.set_label('Decibels')    
+
+                plt.pause(0.01)
+
+                firstRun += 1
+
+                f.write(str(x_coord) + "," + str(y_coord) + "," + str(z_coord) + "," + str(value))
+                f.write("," + str(value2) + "," + str(value3) + "," + str(value4)) 
+                f.write("\n")
+
+                #measurement matrix
+                #BUGS: we are having indexing problems here
+                measurements[measurementIndex][0] = measurementIndex
+                measurements[measurementIndex][1] = x_coord
+                measurements[measurementIndex][2] = y_coord
+                measurements[measurementIndex][3] = z_coord
+                measurements[measurementIndex][4] = 0 #pitch angle
+                measurements[measurementIndex][5] = 0 #roll angle
+                measurements[measurementIndex][6] = center_freq #frequency 
+                measurements[measurementIndex][7] = value3 # this is just s21 for now; can add the others later
+                measurementIndex += 1
+    g_planarWrite(0, 0, ser1)
+    ser1.write(('G0 Z0').encode())
+
+    # write the numpy matrix to a file
+    np.savetext(txt_fileName + '.csv', measurements, delimiter = ',')
+
+    f.close()
+    ser1.close()
+
+    #f = open("coord-data7.txt", "r")
+    #print(f.read())
+
+    now = time.time()
+    duration_took = now-then
+    hours_took = duration_took / 3600
+    print("Time: ", hours_took, " Hr.")
+
+    time_disp = Label(MPCNC, text = hours_took, font = 'Helvetica 18 bold' )
+    time_disp.grid( row = 15, column = 1, pady = 10, padx = 10)
 
 
-   
-	
-	rm = visa.ResourceManager()
-	vna = rm.open_resource('GPIB0::16')
-	
-	f = open(txt_fileName, "w")
-	# df = open("data-file.txt", "w")
-	
-	rows = np.zeros(int(length / yStep))   
-
-	vna_data = np.empty(samplingF * len(rows) * depth) #array to hold a value for each sample
-
-	ser1 = serial.Serial('COM49') # name of port, this might be different because of the hub we use
-	ser1.baudrate = 250000
-	print(ser1.name)
-
-	time.sleep(5) # time delay to give the machine time to initialize
-
-	vna_init(num_points) # intialize vna connection
-
-	interval_length = int(width/samplingF) # Length between sampling positions 
-
-	sampling_coordinates = np.arange(0, width, interval_length)
-	g_planarWrite(0, 0) # to initialize position
-	for k in range(numRuns):
-	#3D plots for s12, s11, s21, s22
-		sPlot=plt.figure(1)
-		ax1 = sPlot.add_subplot(221, projection = '3d')
-		ax1.set_title('S11')
-		ax1.set_xlabel('X Position (mm)')
-		ax1.set_ylabel('Y Position (mm)')
-		ax1.set_zlabel('Z Position (mm)')
-	
-		ax2 = sPlot.add_subplot(221, projection = '3d')
-		ax2.set_title('S12')
-		ax2.set_xlabel('X Position (mm)')
-		ax2.set_ylabel('Y Position (mm)')
-		ax2.set_zlabel('Z Position (mm)')
-		
-		ax3 = sPlot.add_subplot(223, projection = '3d')
-		ax3.set_title('S21')
-		ax3.set_xlabel('X Position (mm)')
-		ax3.set_ylabel('Y Position (mm)')
-		ax3.set_zlabel('Z Position (mm)')
-	
-		ax4 = sPlot.add_subplot(224, projection = '3d')
-		ax4.set_title('S22')
-		ax4.set_xlabel('X Position (mm)')
-		ax4.set_ylabel('Y Position (mm)')
-		ax4.set_zlabel('Z Position (mm)')
-		
-		while j < depth:
-			xVal = width
-			yVal = length
-			for i in range(len(rows)): # movement across each row
-				f.write("\n")
-				for x_coord in sampling_coordinates: # moves the tool to each successive sampling spot in the row
-					g_planarWrite(x_coord, yVal) # on the first one, it takes longer for the tool to reach.. need to fix that
-					pause(PauseDur) 
-					time.sleep(3)
-					value = vna_record(num_points, 's11') #magnitude value
-					value2 = vna_record(num_points, 's12')
-					value3 = vna_record(num_points, 's21')
-					value4 = vna_record(num_points, 's22')
-					
-					##plotting 
-					if(x_coord + i + j != 0):
-						colorbar1.remove()
-						colorbar2.remove()
-						colorbar3.remove()
-						colorbar4.remove()
-				
-					ps11 = ax1.scatter(x_coord,yVal,j, c = value, cmap = 'jet')
-					colorbar1 = plt.colorbar(ps11, ax = ax1)
-					colorbar1.set_label('Decibels')
-					ps12 = ax1.scatter(x_coord,yVal,j, c = value2, cmap = 'jet')
-					colorbar2 = plt.colorbar(ps12, ax = ax2)
-					colorbar2.set_label('Decibels')
-					ps21 = ax3.scatter(x_coord,yVal,j, c = value3, cmap = 'jet')
-					colorbar3 = plt.colorbar(ps21, ax = ax3)
-					colorbar3.set_label('Decibels')
-					ps22 = ax4.scatter(x_coord,yVal,j, c = value4, cmap = 'jet')
-					colorbar4 = plt.colorbar(ps22, ax = ax4)
-					colorbar4.set_label('Decibels')    
-					plt.pause(0.01)
-					
-					f.write(str(x_coord) + "," + str(yVal) + "," + str(j*zStep) + "," + str(value))
-					f.write("," + str(value2) + "," + str(value3) + "," + str(value4)) 
-					f.write("\n")
-
-					#measurement matrix
-
-					measurements[measurementIndex - 1][0] = runNum
-					measurements[measurementIndex - 1][1] = measurementIndex
-					measurements[measurementIndex - 1][2] = x_coord
-					measurements[measurementIndex - 1][3] = yVal
-					measurements[measurementIndex - 1][4] = (j - 1)*10
-					measurements[measurementIndex - 1][5] = 0 #pitch angle
-					measurements[measurementIndex - 1][6] = 0 #roll angle
-					measurements[measurementIndex - 1][7] = center_freq #frequency 
-					measurements[measurementIndex - 1][8] = value3 # this is just s21 for now; can add the others later
-					measurementIndex += 1
-
-
-				g_planarWrite(0, yVal - yStep)  
-				yVal = yVal - yStep # update the yvalue for the next pass on the loop
-			
-			ser1.write(('\nG0 Z' + str(int((j+1)*zStep))).encode()) # encode this to bytes
-			j += 1
-			# update j to j + 1, increase j by 1
-		j = 0 # counter variable to help us loop
-		g_planarWrite(0, 0)
-	ser1.write(('G0 Z0').encode())
-	f.close()
-	ser1.close()
-
-	f = open("coord-data7.txt", "r")
-	print(f.read())
-
-	now = time.time()
-	duration_took = now-then
-	hours_took = duration_took / 3600
-	print("Time: ", hours_took, " Hr.")
-
-	time_disp = Label(MPCNC, text = hours_took, font = 'Helvetica 18 bold' )
-	time_disp.grid( row = 15, column = 1, pady = 10, padx = 10)
