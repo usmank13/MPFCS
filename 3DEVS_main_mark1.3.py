@@ -1,5 +1,5 @@
-# GUI & Tilt Pan - Tri Nguyen
-# VNA & MPCNC - Usman Khan
+# GUI & Tilt Pan - Tri Nguyen/Chase Whyte
+# VNA & MPCNC - Usman Khan/Chase Whyte
 
 # The system scans a 3D space with user-defined parameters to
 # create 3D graphs of electromagnetic fields for wireless power systems.
@@ -17,10 +17,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib import colors
 from matplotlib.ticker import FuncFormatter
-from ButtonFunctions import *
 from VNAFunctions import *
-from SParamFunctions import *
-
+from ButtonFunctions import *
 # Creating a Window of the Application
 window = Tk()
 window.title("3DEVS")
@@ -64,36 +62,6 @@ pan_txt = Entry(Tilt_Pan, width = 10, state = 'disabled')
 pan_txt.grid(row = 2, column = 1)
 pan_confm_lbl = Label(Tilt_Pan, text = "")
 pan_confm_lbl.grid(row = 2, column = 3)
-
-# setting up the drop down menu for is youre using tilt and pan or not
-# ArduinoVar =StringVar(Tilt_Pan)
-# ArduinoVar.set("No")
-# arduinoPort = False
-# ArduinoOpt = OptionMenu(Tilt_Pan, ArduinoVar, "No", "Yes")
-# ArduinoOpt.grid(row = 0, column = 0, padx = 20, pady = 10 )
-
-# def clicked0():
-# 	if ArduinoVar == "Yes":
-# 		arduinoPort = True
-# 		arduino = serial.Serial('COM53', 9600) #Com port is subjected to changee
-
-# ArduinoButt = Button(Tilt_Pan, text= 'SEND', command = clicked0)
-# ArduinoButt.grid(row = 0, column = 1)
-
-#this line opens arduino port
-#arduino = serial.Serial('COM53', 9600) #Com port is subjected to change
-#Setting up buttons
-
- # Button layouts
-tilt_btn1 = Button(Tilt_Pan, text= 'SEND', command = clicked1)
-tilt_btn1.grid(row = 1, column = 2)
-
-pan_btn1 = Button(Tilt_Pan, text= 'SEND', command = clicked2)
-pan_btn1.grid(row = 2, column = 2)
-
-reset_btn = Button(Tilt_Pan, text="RESET", command = resets, state = 'disabled',  bg="red", fg="black", font = 'Helvetica 18 bold')
-reset_btn.grid(row = 3, column = 2, pady = 30)
-
 
 ################################################# THE VNA-MPCNC TAB
 
@@ -158,16 +126,61 @@ lbl11.grid(row = 10, column = 0)
 txt11 = Entry(MPCNC, width = 10)
 txt11.grid(row = 10, column = 1)
 
-submit_val = Button(MPCNC, text = 'SUBMIT VALUES', command = submit_values, font = 'Helvetica 10 bold')
+# setting up the drop down menu for is youre using tilt and pan or not
+# ArduinoVar =StringVar(Tilt_Pan)
+# ArduinoVar.set("No")
+# arduinoPort = False
+# ArduinoOpt = OptionMenu(Tilt_Pan, ArduinoVar, "No", "Yes")
+# ArduinoOpt.grid(row = 0, column = 0, padx = 20, pady = 10 )
+
+# def clicked0():
+# 	if ArduinoVar == "Yes":
+# 		arduinoPort = True
+# 		arduino = serial.Serial('COM53', 9600) #Com port is subjected to changee
+
+# ArduinoButt = Button(Tilt_Pan, text= 'SEND', command = clicked0)
+# ArduinoButt.grid(row = 0, column = 1)
+
+#this line opens arduino port
+#arduino = serial.Serial('COM53', 9600) #Com port is subjected to change
+#HANDLER FUNCTIONS
+def Handlerclicked1():
+    clicked1(tilt_txt, tilt_confm_lbl, pan_txt)
+def Handlerclicked2():
+    clicked2(pan_txt,pan_confm_lbl,reset_btn)
+def Handlerrun_vna():
+    run_vna(reset_VNA,start_btn,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt08,txt09,txt10,txt11, MPCNC)
+def Handlerresets():
+    resets(reset_btn, tilt_txt)
+def Handlersubmit_values():
+    submit_values(submit_val,start_btn,reset_btn,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt08,txt09,txt10,txt11)
+def HandlerVNAreset():
+    VNAreset(reset_VNA,submit_val,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt08,txt09,txt10,txt11)
+    
+ # Button layouts
+tilt_btn1 = Button(Tilt_Pan, text= 'SEND', command = Handlerclicked1)
+tilt_btn1.grid(row = 1, column = 2)
+
+pan_btn1 = Button(Tilt_Pan, text= 'SEND', command = Handlerclicked2)
+pan_btn1.grid(row = 2, column = 2)
+
+reset_btn = Button(Tilt_Pan, text="RESET", command = Handlerresets, state = 'disabled',  bg="red", fg="black", font = 'Helvetica 18 bold')
+reset_btn.grid(row = 3, column = 2, pady = 30)
+
+
+submit_val = Button(MPCNC, text = 'SUBMIT VALUES', command = Handlersubmit_values, font = 'Helvetica 10 bold')
 submit_val.grid(row = 12, column = 1, padx = 5, pady = 5)
 
-reset_VNA = Button(MPCNC, text = 'RESET VALUES', command = VNAreset, state = 'disabled', font = 'Helvetica 10 bold')
+reset_VNA = Button(MPCNC, text = 'RESET VALUES', command = HandlerVNAreset, state = 'disabled', font = 'Helvetica 10 bold')
 reset_VNA.grid(row = 13, column = 1, padx = 5, pady = 5)
 
 #initialize the timer
 hours_took = 0
 
-start_btn = Button(MPCNC, text= 'SEND', command = run_vna, state = 'disabled', bg="green", fg="black", font = 'Helvetica 18 bold')
+"""
+VNA FUNCTION CALL HERE
+"""
+start_btn = Button(MPCNC, text= 'SEND', command = Handlerrun_vna, bg="green", fg="black", font = 'Helvetica 18 bold')
 start_btn.grid(row = 14, column = 1, padx = 10, pady = 10)
 
 ##################################### GRAPHING
@@ -191,36 +204,105 @@ def reset_graph():
 btnSend = Button(name, text = 'RESET', command = reset_graph, state = 'normal', bg = 'red', fg = 'black')
 btnSend.grid(row = 0, column = 3, padx = 10, pady = 5)
 
+
+def S11Param():
+    filename_input = file_txt.get()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111, projection = '3d')
+    x, y, z, s11, s12, s21, s22 = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    ax1.set_title('S11')
+    ax1.set_xlabel('X Position (mm)')
+    ax1.set_ylabel('Y Position (mm)')
+    ax1.set_zlabel('Z Position (mm)')
+    p = ax1.scatter(x, y, z, c = s11, cmap = 'jet')
+    colorbar = fig.colorbar(p)
+    colorbar.set_label('Decibels')
+    plt.show()
+
 s11 = Button(Parameters, text= 'S11', command = S11Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s11.grid(row = 0, column = 0, padx = 10, pady = 5)
+
+def S12Param():
+    filename_input = file_txt.get()
+    # s12.configure(state = 'disabled')
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111, projection = '3d')
+    x, y, z, s11, s12, s21, s22 = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    ax1.set_title('S12')
+    ax1.set_xlabel('X Position (mm)')
+    ax1.set_ylabel('Y Position (mm)')
+    ax1.set_zlabel('Z Position (mm)')
+    p = ax1.scatter(x, y, z, c = s12, cmap = 'jet')
+    colorbar = fig.colorbar(p)
+    colorbar.set_label('Decibels')
+    plt.show()
 
 s12 = Button(Parameters, text= 'S12', command = S12Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s12.grid(row = 0, column = 2, padx = 10, pady = 5)
 
+def S22Param():
+    filename_input = file_txt.get()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111, projection = '3d')
+    x, y, z, s11, s12, s21, s22 = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    ax1.set_title('S22')
+    ax1.set_xlabel('X Position (mm)')
+    ax1.set_ylabel('Y Position (mm)')
+    ax1.set_zlabel('Z Position (mm)')
+    p = ax1.scatter(x, y, z, c = s22, cmap = 'jet')
+    colorbar = fig.colorbar(p)
+    colorbar.set_label('Decibels')
+    plt.show()
 
 s22 = Button(Parameters, text= 'S22', command = S22Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s22.grid(row = 0, column = 4, padx = 10, pady = 5)
 
+def S21Param():
+    filename_input = file_txt.get()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111, projection = '3d')
+    x, y, z, s11, s12, s21, s22 = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    ax1.set_title('S21')
+    ax1.set_xlabel('X Position (mm)')
+    ax1.set_ylabel('Y Position (mm)')
+    ax1.set_zlabel('Z Position (mm)')
+    p = ax1.scatter(x, y, z, c = s21, cmap = 'jet')
+    colorbar = fig.colorbar(p)
+    colorbar.set_label('Decibels')
+    plt.show()
 
 s21 = Button(Parameters, text= 'S21', command = S21Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s21.grid(row = 0, column = 6, padx = 10, pady = 5)
 
 ################################# Live View stuff (very simular to the graphing tab careful not to edit the wrong one)
 
+def S11Param():
+    ##### put the funtion that will generate each point here
+    print('temporary placement action')
+
 s11 = Button(Live_Panel, text= 'S11', command = S11Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s11.grid(row = 0, column = 0, padx = 10, pady = 5)
+
+def S12Param():
+    ##### put the funtion that will generate each point here
+    print('temporary placement action')
 
 s12 = Button(Live_Panel, text= 'S12', command = S12Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s12.grid(row = 0, column = 2, padx = 10, pady = 5)
 
+def S22Param():
+    ##### put the funtion that will generate each point here
+    print('temporary placement action')
+
 s22 = Button(Live_Panel, text= 'S22', command = S22Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s22.grid(row = 0, column = 4, padx = 10, pady = 5)
 
+def S21Param():
+    ##### put the funtion that will generate each point here
+    print('temporary placement action')
+
 s21 = Button(Live_Panel, text= 'S21', command = S21Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s21.grid(row = 0, column = 6, padx = 10, pady = 5)
-
-
-
 
 
 ######################### end of code
