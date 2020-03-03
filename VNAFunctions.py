@@ -85,7 +85,6 @@ def run_vna(reset_VNA,start_btn,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt08,
     print(ser1.name)
 
     time.sleep(5) # time delay to give the machine time to initialize
-    vna_data = np.empty(numSamples) #array to hold a value for each sample
 
     #initialize VNA
     vna_init(num_points, vna)
