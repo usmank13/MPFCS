@@ -1,5 +1,6 @@
 # GUI & Tilt Pan - Tri Nguyen/Chase Whyte
 # VNA & MPCNC - Usman Khan/Chase Whyte
+#Code packaging and real-time plotting - Chase Whyte
 
 # The system scans a 3D space with user-defined parameters to
 # create 3D graphs of electromagnetic fields for wireless power systems.
