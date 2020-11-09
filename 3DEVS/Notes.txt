@@ -1,0 +1,6 @@
+Notes
+
+1. Put the 3DEVS in the corner with the limit switch when you start it. It thinks of its start position as 0,0,0
+	It returns to this value at the end of the execution
+2. If you try to set a command that goes against the limit switches, the switches stop it from going and pressing against itself
+3. 
