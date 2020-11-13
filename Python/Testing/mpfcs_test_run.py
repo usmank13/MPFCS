@@ -2,7 +2,7 @@
 
 import serial
 import visa
-from VNAConfig import *
+from Backend.VNAConfig import *
 import time
 
 

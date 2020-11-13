@@ -4,20 +4,30 @@
 
 @author: chasewhyte
 """
-import numpy as np
-import serial
 import time
-import random
-import visa
-from tkinter import *
-from tkinter import messagebox
-from tkinter import ttk
+'''
+# setting up the drop down menu for is youre using tilt and pan or not
+# ArduinoVar =StringVar(Tilt_Pan)
+# ArduinoVar.set("No")
+# arduinoPort = False
+# ArduinoOpt = OptionMenu(Tilt_Pan, ArduinoVar, "No", "Yes")
+# ArduinoOpt.grid(row = 0, column = 0, padx = 20, pady = 10 )
 
+# def clicked0():
+#     if ArduinoVar == "Yes":
+#         arduinoPort = True
+#         arduino = serial.Serial('COM53', 9600) #Com port is subjected to changee
 
+# ArduinoButt = Button(Tilt_Pan, text= 'SEND', command = clicked0)
+# ArduinoButt.grid(row = 0, column = 1)
+
+#this line opens arduino port
+#arduino = serial.Serial('COM53', 9600) #Com port is subjected to change
+'''
 
 # Defines functionality for the tilt button
 # Sends messages to the user upon a click and sends command to the tilt motor
-def clicked1(tilt_txt, tilt_confm_lbl, pan_txt):
+def tp_head_tilt(tilt_txt, tilt_confm_lbl, pan_txt, ser_tp_head):
     res1 = tilt_txt.get()
     if (int(res1) > 89):
         tilt_confm_lbl.configure(text = "Must be 0-89 degrees")
@@ -26,12 +36,13 @@ def clicked1(tilt_txt, tilt_confm_lbl, pan_txt):
         tilt_txt.configure(state = 'disabled')
         pan_txt.configure(state = 'normal')
         res1 = (str(res1).encode())
-        arduino.write(res1)
+#         arduino.write(res1)
+        ser_tp_head.write(res1)
 
 
 # Defines functionality for the pan button
 # Sends messages to the user upon a click on the pan button and sends command to the pan motor
-def clicked2(pan_txt,pan_confm_lbl,reset_btn):
+def tp_head_pan(pan_txt,pan_confm_lbl,reset_btn, ser_tp_head):
     res2 = pan_txt.get()
     if (int(res2) < 20 and int(res2) > 160):
         pan_confm_lbl.configure(text = "Must be 20-160 degress")
@@ -40,31 +51,17 @@ def clicked2(pan_txt,pan_confm_lbl,reset_btn):
         pan_txt.configure(state = 'disabled')
         reset_btn.configure(state = 'normal')
         res2 = (str(res2).encode())
-        arduino.write(res2)
+#         arduino.write(res2)
+        ser_tp_head.write(res2)
 
 # Resets tilt and pan motor state
-def resets(reset_btn, tilt_txt):
+def tp_head_resets(reset_btn, tilt_txt, ser_tp_head):
     reset_btn.configre(state = 'disabled')
-    arduino.write('0'.encode())
+#     arduino.write('0'.encode())
+    ser_tp_head.write('0'.encode())
     time.sleep(2)
-    arduino.write('20'.encode())
+#     arduino.write('20'.encode())
+    ser_tp_head.write('20'.encode())
     time.sleep(2)
     tilt_txt.configure(state = 'normal')
     
-# Sets up buttons for submitting system inputs
-def submit_values(submit_val,start_btn,reset_btn,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt08,txt09,txt10,txt11):
-    submit_val.configure(state = 'disabled')
-    txt00.configure(state = 'disabled')
-    txt01.configure(state = 'disabled')
-    txt02.configure(state = 'disabled')
-    txt03.configure(state = 'disabled')
-    txt04.configure(state = 'disabled')
-    txt05.configure(state = 'disabled')
-    # txt06.configure(state = 'disabled')
-    txt07.configure(state = 'disabled')
-    txt08.configure(state = 'disabled')
-    txt09.configure(state = 'disabled')
-    txt10.configure(state = 'disabled')
-    txt11.configure(state = 'disabled')
-    start_btn.configure(state = 'normal')
-    reset_btn.configure(state = 'normal')
