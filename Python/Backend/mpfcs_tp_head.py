@@ -6,6 +6,9 @@
 """
 import time
 '''
+# NOTE: not sure if this commented out code is useful. Need to check
+
+
 # setting up the drop down menu for is youre using tilt and pan or not
 # ArduinoVar =StringVar(Tilt_Pan)
 # ArduinoVar.set("No")
@@ -25,8 +28,18 @@ import time
 #arduino = serial.Serial('COM53', 9600) #Com port is subjected to change
 '''
 
-# Defines functionality for the tilt button
-# Sends messages to the user upon a click and sends command to the tilt motor
+
+
+"""
+@brief: Functionality for the tilt button. Sends messages to the user upon a click and 
+sends command to the tilt motor.
+
+@param[in] tilt_txt: tilt input box from the GUI
+@param[in] tilt_confm_lbl: Confirmation label after the click
+@param[in] pan_txt: pan input box from the GUI
+@param[in] ser_tp_head: serial comm object (see pyserial) for communication with the motors' controller
+"""
+
 def tp_head_tilt(tilt_txt, tilt_confm_lbl, pan_txt, ser_tp_head):
     res1 = tilt_txt.get()
     if (int(res1) > 89):
@@ -40,8 +53,15 @@ def tp_head_tilt(tilt_txt, tilt_confm_lbl, pan_txt, ser_tp_head):
         ser_tp_head.write(res1)
 
 
-# Defines functionality for the pan button
-# Sends messages to the user upon a click on the pan button and sends command to the pan motor
+"""
+@brief: Functionality for the pan button. Sends messages to the user upon a click and 
+sends command to the pan motor.
+
+@param[in] pan_txt: pan input box from the GUI
+@param[in] pan_confm_lbl: Confirmation label after the click
+@param[in] reset_btn: Reset button object
+@param[in] ser_tp_head: serial comm object (see pyserial) for communication with the motors' controller
+"""
 def tp_head_pan(pan_txt,pan_confm_lbl,reset_btn, ser_tp_head):
     res2 = pan_txt.get()
     if (int(res2) < 20 and int(res2) > 160):
@@ -54,9 +74,15 @@ def tp_head_pan(pan_txt,pan_confm_lbl,reset_btn, ser_tp_head):
 #         arduino.write(res2)
         ser_tp_head.write(res2)
 
-# Resets tilt and pan motor state
+"""
+@brief: Resets tilt and pan buttons
+
+@param[in] reset_btn: reset button object
+@param[in] tilt_txt: tilt input box from GUI
+@param[in] ser_tp_head: serial comm object (see pyserial) for communication with the motors' controller
+"""
 def tp_head_resets(reset_btn, tilt_txt, ser_tp_head):
-    reset_btn.configre(state = 'disabled')
+    reset_btn.configure(state = 'disabled')
 #     arduino.write('0'.encode())
     ser_tp_head.write('0'.encode())
     time.sleep(2)

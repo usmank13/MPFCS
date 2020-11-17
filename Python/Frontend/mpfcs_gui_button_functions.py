@@ -5,7 +5,14 @@
 @author: chasewhyte
 """
     
-# Sets up buttons for submitting system inputs
+"""
+@brief Functionality for when the submit button is clicked. Disables the submit button, grays out
+input boxes so they can no longer be edited, and resets the start and reset button states. 
+
+@param[in] submit_val: submit button
+@param[in] start_btn, reset_btn: start and reset buttons
+@param[in] txt00-txt11: Input boxes
+"""
 def submit_values(submit_val, start_btn, reset_btn, txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt08,txt09,txt10,txt11):
     submit_val.configure(state = 'disabled')
     txt00.configure(state = 'disabled')
