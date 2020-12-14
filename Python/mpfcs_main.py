@@ -10,8 +10,10 @@ import numpy as np
 import serial
 import time
 import pyvisa as visa
-from tkinter import *
+from tkinter import ttk
+import tkinter as tk
 import matplotlib.pyplot as plt 
+from mpl_toolkits.mplot3d import Axes3D
 
 from Frontend.mpfcs_gui_button_functions import submit_values, vna_buttons_reset
 from Backend.mpfcs_vna import vna_init, vna_record#, vna_q_calc
@@ -22,7 +24,7 @@ from Backend.mpfcs_mpcnc import mpcnc_move_xyz, mpcnc_pause
 rm = visa.ResourceManager()
 visa_vna = rm.open_resource('GPIB0::16')
 print("VNA: {}".format(visa_vna.query('*IDN?')))
-ser_rambo = serial.Serial('COM49') # name of port, this might be different because of the hub we use
+ser_rambo = serial.Serial('COM6') # name of port, this might be different because of the hub we use
 ser_rambo.baudrate = 250000
 print("RAMBo Controller for MPCNC: {}".format(ser_rambo.name))
 
@@ -129,16 +131,16 @@ def mpfcs_run(reset_VNA,start_btn,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt0
     depth = int(txt05.get())
     print("Depth: " + str(depth))
     center_freq = float(txt07.get())
-#     span = int(txt08.get())
+    span = int(txt08.get())
     num_points = int(txt09.get())
     zStep = int(txt10.get())
-    txt_fileName = txt11.get() + ".txt"
+    txt_fileName = txt11.get()
     then = time.time()
 
     # initializing some values
     sampling_x_coordinates = np.arange(0, width, xStep)
-    sampling_z_coordinates = np.arange(0, depth, zStep)
-    sampling_y_coordinates = np.arange(length, 0, -1*yStep)
+    sampling_z_coordinates = -np.arange(0, depth, zStep)
+    sampling_y_coordinates = np.arange(0, length, yStep)
     s11 = np.array([])
     s12 = np.array([])
     s21 = np.array([])
@@ -156,103 +158,153 @@ def mpfcs_run(reset_VNA,start_btn,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt0
     estimatedTime = (PauseDur+1)*numSamples
     print('Estimated time to completion (hours): ' + str(estimatedTime/3600))
 
-    f = open(txt_fileName, "w")
+    f = open(txt_fileName+".txt", "w")
 
     time.sleep(5) # time delay to give the machine time to initialize
 #     vna_data = np.empty(numSamples) #array to hold a value for each sample
 
     #initialize VNA
-    vna_init(num_points, visa_vna, center_freq)
+    vna_init(num_points, visa_vna, center_freq, span)
     speed_default = 10*60 # 10mm/s*60s/1min
     xVal = 0; yVal = 0; zVal = 0; speed = speed_default;
     mpcnc_move_xyz(xVal, yVal, zVal, speed, ser_rambo) # to initialize position
 
     #3D plots for s12, s11, s21, s22
-    sPlot=plt.figure(1)
-    sPlot.tight_layout(pad=3.0)
-    ax1 = sPlot.add_subplot(221, projection = '3d')
-    ax1.set_title('S11')
-    ax1.set_xlabel('X Position (mm)')
-    ax1.set_ylabel('Y Position (mm)')
-    ax1.set_zlabel('Z Position (mm)')
+#     sPlot=plt.figure(1)
+#     sPlot.tight_layout(pad=3.0)
+#     ax1 = sPlot.add_subplot(221, projection = '3d')
+#     ax1.set_title('S11')
+#     ax1.set_xlabel('X Position (mm)')
+#     ax1.set_ylabel('Y Position (mm)')
+#     ax1.set_zlabel('Z Position (mm)')
+# 
+#     ax2 = sPlot.add_subplot(222, projection = '3d')
+#     ax2.set_title('S12')
+#     ax2.set_xlabel('X Position (mm)')
+#     ax2.set_ylabel('Y Position (mm)')
+#     ax2.set_zlabel('Z Position (mm)')
+#     
+#     ax3 = sPlot.add_subplot(223, projection = '3d')
+#     ax3.set_title('S21')
+#     ax3.set_xlabel('X Position (mm)')
+#     ax3.set_ylabel('Y Position (mm)')
+#     ax3.set_zlabel('Z Position (mm)')
+# 
+#     ax4 = sPlot.add_subplot(224, projection = '3d')
+#     ax4.set_title('S22')
+#     ax4.set_xlabel('X Position (mm)')
+#     ax4.set_ylabel('Y Position (mm)')
+#     ax4.set_zlabel('Z Position (mm)')
+    print("{}".format(sampling_z_coordinates))
+    print("{}".format(sampling_y_coordinates))
+    print("{}".format(sampling_x_coordinates))
+    y_positive_direction = False
+    x_positive_direction = False
+    deg_range = range(60)[::5]                    
+    for tilt_deg in deg_range:
+#                     print("Pos Tilt3 Deg = {}".format(tilt_deg))
+#                     print("Pos Pan Deg = {}".format(tilt_deg))
+        ser_rambo.write(("M280"+" P0"+" S"+str(tilt_deg)).encode()) # Roll serial write
+        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+        ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
+        ser_rambo.write(b'\n')
+        time.sleep(0.2)
+        ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()) # Roll serial write
+        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+        ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
+        ser_rambo.write(b'\n')
+        time.sleep(0.2)
 
-    ax2 = sPlot.add_subplot(222, projection = '3d')
-    ax2.set_title('S12')
-    ax2.set_xlabel('X Position (mm)')
-    ax2.set_ylabel('Y Position (mm)')
-    ax2.set_zlabel('Z Position (mm)')
-    
-    ax3 = sPlot.add_subplot(223, projection = '3d')
-    ax3.set_title('S21')
-    ax3.set_xlabel('X Position (mm)')
-    ax3.set_ylabel('Y Position (mm)')
-    ax3.set_zlabel('Z Position (mm)')
-
-    ax4 = sPlot.add_subplot(224, projection = '3d')
-    ax4.set_title('S22')
-    ax4.set_xlabel('X Position (mm)')
-    ax4.set_ylabel('Y Position (mm)')
-    ax4.set_zlabel('Z Position (mm)')
-
+             
+    for tilt_deg in reversed(deg_range):
+#                     print("Neg Pan Deg = {}".format(tilt_deg))
+        ser_rambo.write(("M280"+" P0"+" S"+str(tilt_deg)).encode()) # Roll serial write
+        ser_rambo.write(b'\n')
+        ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
+        ser_rambo.write(b'\n')
+        time.sleep(0.5)
+#                     print("Neg Tilt3 Deg = {}".format(tilt_deg))                    
+        ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()) # Roll serial write
+        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+        ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
+        ser_rambo.write(b'\n')
+        time.sleep(0.5)
+        
     for z_coord in sampling_z_coordinates: # for each z plane 
-#         ser_rambo.write(('\nG0 Z' + str(int(z_coord))).encode()) 
-        for y_coord in sampling_y_coordinates: # for each row
+        print("\nz_coord = {}".format(z_coord))
+        y_positive_direction = not(y_positive_direction)
+#         print("y_positive_direction = {}".format(y_positive_direction))
+        if y_positive_direction == True:
+            _sampling_y_coordinates = sampling_y_coordinates
+        else:
+            _sampling_y_coordinates = reversed(sampling_y_coordinates)
+             
+        for y_coord in _sampling_y_coordinates: # for each row
             f.write("\n")
-            for x_coord in sampling_x_coordinates: # moves the tool to each successive sampling spot in the row
-                speed = 1; 
+            print("\ny_coord = {}".format(y_coord))
+            x_positive_direction = not(x_positive_direction)
+#             print("x_positive_direction = {}".format(x_positive_direction))
+            if x_positive_direction:
+                _sampling_x_coordinates = sampling_x_coordinates
+            else:
+                _sampling_x_coordinates = reversed(sampling_x_coordinates)
+             
+            for x_coord in _sampling_x_coordinates: # moves the tool to each successive sampling spot in the row
+                speed = speed_default*2;
+                print("x_coord = {}".format(x_coord))
                 mpcnc_move_xyz(x_coord, y_coord, z_coord, speed, ser_rambo) # to initialize position
                 mpcnc_pause(PauseDur, ser_rambo) 
                 time.sleep(3)
-
+  
                 value = vna_record(num_points, 's11', visa_vna) #magnitude value
                 value2 = vna_record(num_points, 's12', visa_vna)
                 value3 = vna_record(num_points, 's21', visa_vna)
                 value4 = vna_record(num_points, 's22', visa_vna)
-                
-                print("s11: ", value, "\ns12: ", value2, "\ns21: ", value3, "\ns22: ", value4, "\n\n")
+                  
+#                 print("s11: ", value, "\ns12: ", value2, "\ns21: ", value3, "\ns22: ", value4, "\n\n")
                 x_coords = np.concatenate([x_coords, np.array([x_coord])])
                 y_coords = np.concatenate([y_coords, np.array([y_coord])])
                 z_coords = np.concatenate([z_coords, np.array([z_coord])])
-
+  
                 s11 = np.concatenate([s11, np.array([value])])
                 s12 = np.concatenate([s12, np.array([value2])])
                 s21 = np.concatenate([s21, np.array([value3])])
                 s22 = np.concatenate([s22, np.array([value4])])
                 #plotting 
-                if(firstRun != 0):
-                    print("maybe remove colorbars first?")
+#                 if(firstRun != 0):
+#                     print("maybe remove colorbars first?")
 #                     colorbar1.remove()
 #                     colorbar2.remove()
 #                     colorbar3.remove()
 #                     colorbar4.remove()
-            
-                ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11, cmap = 'jet')
-                colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
-                colorbar1.set_label('Decibels')
-
-                ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12, cmap = 'jet')
-                colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
-                colorbar2.set_label('Decibels')
-
-                ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21, cmap = 'jet')
-                colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
-                colorbar3.set_label('Decibels')
-                
-                ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22, cmap = 'jet')
-                colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
-                colorbar4.set_label('Decibels')    
-
-                plt.pause(0.01)
-
+              
+#                 ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11, cmap = 'jet')
+#                 colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
+#                 colorbar1.set_label('Decibels')
+# 
+#                 ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12, cmap = 'jet')
+#                 colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
+#                 colorbar2.set_label('Decibels')
+# 
+#                 ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21, cmap = 'jet')
+#                 colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
+#                 colorbar3.set_label('Decibels')
+#                 
+#                 ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22, cmap = 'jet')
+#                 colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
+#                 colorbar4.set_label('Decibels')    
+  
+#                 plt.pause(0.01)
+  
                 firstRun += 1
-
+  
                 f.write(str(x_coord) + "," + str(y_coord) + "," + str(z_coord) + "," + str(value))
                 f.write("," + str(value2) + "," + str(value3) + "," + str(value4)) 
                 f.write("\n")
-
+  
                 #measurement matrix
                 #BUGS: we are having indexing problems here
-                measurements[measurementIndex][0] = measurementIndex
+                measurements[measurementIndex][0] = int(measurementIndex)
                 measurements[measurementIndex][1] = x_coord
                 measurements[measurementIndex][2] = y_coord
                 measurements[measurementIndex][3] = z_coord
@@ -261,13 +313,13 @@ def mpfcs_run(reset_VNA,start_btn,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt0
                 measurements[measurementIndex][6] = center_freq #frequency 
                 measurements[measurementIndex][7] = value3 # this is just s21 for now; can add the others later
                 measurementIndex += 1
-                
+                 
     xVal = 0; yVal = 0; zVal = 0; speed = speed_default;
     mpcnc_move_xyz(xVal, yVal, zVal, speed, ser_rambo) # to initialize position
 #     ser_rambo.write(('G0 Z0').encode())
 
     # write the numpy matrix to a file
-    np.savetext(txt_fileName + '.csv', measurements, delimiter = ',')
+    np.savetxt(txt_fileName + '.csv', measurements, delimiter = ',')
 
     f.close()
     ser_rambo.close()
@@ -280,11 +332,11 @@ def mpfcs_run(reset_VNA,start_btn,txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt0
     hours_took = duration_took / 3600
     print("Time: ", hours_took, " Hr.")
 
-    time_disp = Label(mpfcs_label_frame, text = hours_took, font = 'Helvetica 18 bold' )
+    time_disp = tk.Label(mpfcs_label_frame, text = hours_took, font = 'Helvetica 18 bold' )
     time_disp.grid( row = 15, column = 1, pady = 10, padx = 10)
 
 # Creating a Window of the Application
-window = Tk()
+window = tk.Tk()
 window.title("MPFCS V0.1")
 
 # tabs controlling and graphing
@@ -298,113 +350,124 @@ tab_ctrl.pack(expand= True, fill='both')
 #IN the System Control Tab
 #Sectionin of Tilt and Pan, mpfcs_label_frame, and Future Live Scan
 tp_label_frame = ttk.LabelFrame(VNATab, text = 'Tilt and Pan')
-tp_label_frame.pack(fill=BOTH, expand=True, side = 'left')
+tp_label_frame.pack(fill=tk.BOTH, expand=True, side = 'left')
 mpfcs_label_frame = ttk.LabelFrame(VNATab, text = 'VNA')
-mpfcs_label_frame.pack(fill=BOTH, expand=True,side = 'left')
+mpfcs_label_frame.pack(fill=tk.BOTH, expand=True,side = 'left')
 Live_Panel = ttk.LabelFrame(VNATab, text = 'Live View')
-Live_Panel.pack(fill = BOTH, expand = True, side = 'left')
+Live_Panel.pack(fill = tk.BOTH, expand = True, side = 'left')
 
 # IN the Graphing Tab
 graph_tab_label_frame =  ttk.LabelFrame(GraphTab, text = 'FILE NAME')
-graph_tab_label_frame.pack(fill = BOTH, expand = False)
+graph_tab_label_frame.pack(fill = tk.BOTH, expand = False)
 Parameters = ttk.LabelFrame(GraphTab, text = 'PARAMETER SELECTIONS')
-Parameters.pack(fill=BOTH, expand=True)
+Parameters.pack(fill=tk.BOTH, expand=True)
 
 #In the Pan and Tilt Tab
 
 # Labeling of the components
-tilt_lbl = Label(tp_label_frame, text = "Tilt Servo Angle (0-90):")
+tilt_lbl = tk.Label(tp_label_frame, text = "Tilt Servo Angle (-90 to 90deg):")
 tilt_lbl.grid(row = 1, column = 0)
-tilt_txt = Entry(tp_label_frame, width = 10, state = 'normal')
+tilt_txt = tk.Entry(tp_label_frame, width = 10, state = 'normal')
 tilt_txt.grid(row = 1, column = 1)
-tilt_confm_lbl = Label(tp_label_frame, text = "")
+tilt_confm_lbl = tk.Label(tp_label_frame, text = "")
 tilt_confm_lbl.grid(row = 1, column = 3)
 
-pan_lbl = Label(tp_label_frame, text = "Pan Servo Angle (20-160): ")
+pan_lbl = tk.Label(tp_label_frame, text = "Pan Servo Angle (0-180): ")
 pan_lbl.grid(row = 2, column = 0)
-pan_txt = Entry(tp_label_frame, width = 10, state = 'disabled')
+pan_txt = tk.Entry(tp_label_frame, width = 10, state = 'disabled')
 pan_txt.grid(row = 2, column = 1)
-pan_confm_lbl = Label(tp_label_frame, text = "")
+pan_confm_lbl = tk.Label(tp_label_frame, text = "")
 pan_confm_lbl.grid(row = 2, column = 3)
 
 ################################################# THE mpfcs_label_frame TAB
 
 #mpfcs_label_frame tab's components set up
-lbl00 = Label(mpfcs_label_frame, text = "Length: ")
+lbl00 = tk.Label(mpfcs_label_frame, text = "Length: ")
 lbl00.grid(row = 0, column = 0)
-txt00 = Entry(mpfcs_label_frame, width = 10)
+txt00 = tk.Entry(mpfcs_label_frame, width = 10)
 txt00.grid(row = 0, column = 1)
+txt00.insert(tk.END, '30')
 
-lbl01 = Label(mpfcs_label_frame, text = "Width:")
+lbl01 = tk.Label(mpfcs_label_frame, text = "Width:")
 lbl01.grid(row = 1, column = 0)
-txt01 = Entry(mpfcs_label_frame, width = 10)
+txt01 = tk.Entry(mpfcs_label_frame, width = 10)
 txt01.grid(row = 1, column = 1)
+txt01.insert(tk.END, '30')
 
-lbl02 = Label(mpfcs_label_frame, text = "Pause duration (s): ")
+lbl02 = tk.Label(mpfcs_label_frame, text = "Pause duration (s): ")
 lbl02.grid(row = 2, column = 0)
-txt02 = Entry(mpfcs_label_frame, width = 10)
+txt02 = tk.Entry(mpfcs_label_frame, width = 10)
 txt02.grid(row = 2, column = 1)
+txt02.insert(tk.END, '1')
 
-lbl03 = Label(mpfcs_label_frame, text = "xStep: ") ## used to be samplingF
+lbl03 = tk.Label(mpfcs_label_frame, text = "xStep: ") ## used to be samplingF
 lbl03.grid(row = 3, column = 0)
-txt03 = Entry(mpfcs_label_frame, width = 10)
+txt03 = tk.Entry(mpfcs_label_frame, width = 10)
 txt03.grid(row = 3, column = 1)
+txt03.insert(tk.END, '10')
 
-lbl04 = Label(mpfcs_label_frame, text = "yStep: ")
+lbl04 = tk.Label(mpfcs_label_frame, text = "yStep: ")
 lbl04.grid(row = 4, column = 0)
-txt04 = Entry(mpfcs_label_frame, width = 10)
+txt04 = tk.Entry(mpfcs_label_frame, width = 10)
 txt04.grid(row = 4, column = 1)
+txt04.insert(tk.END, '10')
 
-lbl05 = Label(mpfcs_label_frame, text = "Height: ") # used to be called depth
+lbl05 = tk.Label(mpfcs_label_frame, text = "Height: ") # used to be called depth
 lbl05.grid(row = 5, column = 0)
-txt05 = Entry(mpfcs_label_frame, width = 10)
+txt05 = tk.Entry(mpfcs_label_frame, width = 10)
 txt05.grid(row = 5, column = 1)
+txt05.insert(tk.END, '20')
 
-# lbl06 = Label(mpfcs_label_frame, text = "Center Frequency: ")
+# lbl06 = tk.Label(mpfcs_label_frame, text = "Center Frequency: ")
 # lbl06.grid(row = 6, column = 0)
-# txt06 = Entry(mpfcs_label_frame, width = 10)
+# txt06 = tk.Entry(mpfcs_label_frame, width = 10)
 # txt06.grid(row = 6, column = 1)
 
-lbl07 = Label(mpfcs_label_frame, text = "Center Frequency: ")
+lbl07 = tk.Label(mpfcs_label_frame, text = "VNA Center Frequency (MHz): ")
 lbl07.grid(row = 6, column = 0)
-txt07 = Entry(mpfcs_label_frame, width = 10)
+txt07 = tk.Entry(mpfcs_label_frame, width = 10)
 txt07.grid(row = 6, column = 1)
+txt07.insert(tk.END, '13.56')
 
-lbl08 = Label(mpfcs_label_frame, text = "Span: ")
+lbl08 = tk.Label(mpfcs_label_frame, text = "VNA Span (MHz): ")
 lbl08.grid(row = 7, column = 0)
-txt08 = Entry(mpfcs_label_frame, width = 10)
+txt08 = tk.Entry(mpfcs_label_frame, width = 10)
 txt08.grid(row = 7, column = 1)
+txt08.insert(tk.END, '2')
 
-lbl09 = Label(mpfcs_label_frame, text = "Number of Points: ")
+lbl09 = tk.Label(mpfcs_label_frame, text = "VNA # Sweep Points: ")
 lbl09.grid(row = 8, column = 0)
-txt09 = Entry(mpfcs_label_frame, width = 10)
+txt09 = tk.Entry(mpfcs_label_frame, width = 10)
 txt09.grid(row = 8, column = 1)
+txt09.insert(tk.END, '11')
 
-lbl10 = Label(mpfcs_label_frame, text = "Z-Step: ")
+lbl10 = tk.Label(mpfcs_label_frame, text = "Z-Step: ")
 lbl10.grid(row = 9, column = 0)
-txt10 = Entry(mpfcs_label_frame, width = 10)
+txt10 = tk.Entry(mpfcs_label_frame, width = 10)
 txt10.grid(row = 9, column = 1)
+txt10.insert(tk.END, '10')
 
-lbl11 = Label(mpfcs_label_frame, text = "Name the File: ")
+lbl11 = tk.Label(mpfcs_label_frame, text = "Name the File: ")
 lbl11.grid(row = 10, column = 0)
-txt11 = Entry(mpfcs_label_frame, width = 10)
+txt11 = tk.Entry(mpfcs_label_frame, width = 10)
 txt11.grid(row = 10, column = 1)
+txt11.insert(tk.END, 'vna_00')
 
-# Button layouts
-tilt_btn1 = Button(tp_label_frame, text= 'SEND', command = handler_tp_head_tilt)
+# tk.Button layouts
+tilt_btn1 = tk.Button(tp_label_frame, text= 'SEND', command = handler_tp_head_tilt)
 tilt_btn1.grid(row = 1, column = 2)
 
-pan_btn1 = Button(tp_label_frame, text= 'SEND', command = handler_tp_head_pan)
+pan_btn1 = tk.Button(tp_label_frame, text= 'SEND', command = handler_tp_head_pan)
 pan_btn1.grid(row = 2, column = 2)
 
-reset_btn = Button(tp_label_frame, text="RESET", command = vna_buttons_reset, state = 'disabled',  bg="red", fg="black", font = 'Helvetica 18 bold')
+reset_btn = tk.Button(tp_label_frame, text="RESET", command = vna_buttons_reset, state = 'disabled',  bg="red", fg="black", font = 'Helvetica 18 bold')
 reset_btn.grid(row = 3, column = 2, pady = 30)
 
 
-submit_val = Button(mpfcs_label_frame, text = 'SUBMIT VALUES', command = handler_submit_values, font = 'Helvetica 10 bold')
+submit_val = tk.Button(mpfcs_label_frame, text = 'SUBMIT VALUES', command = handler_submit_values, font = 'Helvetica 10 bold')
 submit_val.grid(row = 12, column = 1, padx = 5, pady = 5)
 
-reset_VNA = Button(mpfcs_label_frame, text = 'RESET VALUES', command = handler_vna_reset, state = 'disabled', font = 'Helvetica 10 bold')
+reset_VNA = tk.Button(mpfcs_label_frame, text = 'RESET VALUES', command = handler_vna_reset, state = 'disabled', font = 'Helvetica 10 bold')
 reset_VNA.grid(row = 13, column = 1, padx = 5, pady = 5)
 
 #initialize the timer
@@ -413,35 +476,35 @@ hours_took = 0
 """
 VNA FUNCTION CALL HERE
 """
-start_btn = Button(mpfcs_label_frame, text= 'SEND', command = handler_mpfcs_run, bg="green", fg="black", font = 'Helvetica 18 bold')
+start_btn = tk.Button(mpfcs_label_frame, text= 'SEND', command = handler_mpfcs_run, bg="green", fg="black", font = 'Helvetica 18 bold')
 start_btn.grid(row = 14, column = 1, padx = 10, pady = 10)
 
 ##################################### GRAPHING
 
 # Setting up layout
-file_name = Label(graph_tab_label_frame, text = "File Name:")
+file_name = tk.Label(graph_tab_label_frame, text = "File Name:")
 file_name.grid(row = 0, column = 0)
-file_txt = Entry(graph_tab_label_frame, width = 20, state = 'normal')
+file_txt = tk.Entry(graph_tab_label_frame, width = 20, state = 'normal')
 file_txt.grid(row = 0, column = 1)
 
 # setting up buttons
 
-btnSend = Button(graph_tab_label_frame, text = 'SUBMIT', command = handler_send, state = 'normal', bg = 'green', fg = 'black')
+btnSend = tk.Button(graph_tab_label_frame, text = 'SUBMIT', command = handler_send, state = 'normal', bg = 'green', fg = 'black')
 btnSend.grid(row = 0, column = 2, padx = 10, pady = 5)
 
-btnSend = Button(graph_tab_label_frame, text = 'RESET', command = handler_reset_graph, state = 'normal', bg = 'red', fg = 'black')
+btnSend = tk.Button(graph_tab_label_frame, text = 'RESET', command = handler_reset_graph, state = 'normal', bg = 'red', fg = 'black')
 btnSend.grid(row = 0, column = 3, padx = 10, pady = 5)
 
-s11 = Button(Parameters, text= 'S11', command = handler_s11_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s11 = tk.Button(Parameters, text= 'S11', command = handler_s11_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s11.grid(row = 0, column = 0, padx = 10, pady = 5)
 
-s12 = Button(Parameters, text= 'S12', command = handler_s12_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s12 = tk.Button(Parameters, text= 'S12', command = handler_s12_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s12.grid(row = 0, column = 2, padx = 10, pady = 5)
 
-s22 = Button(Parameters, text= 'S22', command = handler_s22_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s22 = tk.Button(Parameters, text= 'S22', command = handler_s22_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s22.grid(row = 0, column = 4, padx = 10, pady = 5)
 
-s21 = Button(Parameters, text= 'S21', command = handler_s21_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s21 = tk.Button(Parameters, text= 'S21', command = handler_s21_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s21.grid(row = 0, column = 6, padx = 10, pady = 5)
 
 
@@ -452,28 +515,28 @@ s21.grid(row = 0, column = 6, padx = 10, pady = 5)
 #     ##### put the funtion that will generate each point here
 #     print('temporary placement action')
 # 
-# s11 = Button(Live_Panel, text= 'S11', command = S11Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+# s11 = tk.Button(Live_Panel, text= 'S11', command = S11Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 # s11.grid(row = 0, column = 0, padx = 10, pady = 5)
 # 
 # def S12Param():
 #     ##### put the funtion that will generate each point here
 #     print('temporary placement action')
 # 
-# s12 = Button(Live_Panel, text= 'S12', command = S12Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+# s12 = tk.Button(Live_Panel, text= 'S12', command = S12Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 # s12.grid(row = 0, column = 2, padx = 10, pady = 5)
 # 
 # def S22Param():
 #     ##### put the funtion that will generate each point here
 #     print('temporary placement action')
 # 
-# s22 = Button(Live_Panel, text= 'S22', command = S22Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+# s22 = tk.Button(Live_Panel, text= 'S22', command = S22Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 # s22.grid(row = 0, column = 4, padx = 10, pady = 5)
 # 
 # def S21Param():
 #     ##### put the funtion that will generate each point here
 #     print('temporary placement action')
 # 
-# s21 = Button(Live_Panel, text= 'S21', command = S21Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+# s21 = tk.Button(Live_Panel, text= 'S21', command = S21Param, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 # s21.grid(row = 0, column = 6, padx = 10, pady = 5)
 
 
