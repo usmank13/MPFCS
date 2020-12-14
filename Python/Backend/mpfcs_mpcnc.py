@@ -5,7 +5,7 @@
 """
 
 """
-@brief Commands the MPCNC to move to a given planar (x, y) position with G-code
+@brief Commands the MPCNC to move to a given (x, y, z) position with G-code
 
 @param[in] xVal: X coordinate to move the probe to
 @param[in] yVal: Y coordinate to move the probe to
