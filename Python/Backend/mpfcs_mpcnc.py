@@ -32,3 +32,22 @@ def mpcnc_move_xyz(xVal, yVal, zVal, speed, ser_rambo):
 def mpcnc_pause(PauseDur, ser_rambo):
     ser_rambo.write(("G4 " + "P" + str(int(PauseDur*10))).encode())
     ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+    
+    
+def mpcnc_home_xyz(home_sel, speed, ser_rambo):
+    if home_sel == 'xyz':
+        ser_rambo.write(("G28").encode())
+        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+    elif home_sel == 'x':
+        ser_rambo.write(("G28 X").encode())
+        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+    elif home_sel == 'y':
+        ser_rambo.write(("G28 Y").encode())
+        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+    elif home_sel == 'z':
+        ser_rambo.write(("G28 Z").encode())
+        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+    else:
+        ser_rambo.write(("G92 X0 Y0 Z0").encode())
+        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+        
