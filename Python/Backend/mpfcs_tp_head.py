@@ -94,4 +94,6 @@ def tp_head_resets(reset_btn, tilt_txt, ser_rambo):
     time.sleep(2)
     
     tilt_txt.configure(state = 'normal')
+
+# def tp_home_set(ser_rambo):
     

@@ -40,6 +40,9 @@ def handler_tp_head_tilt_step():
 def handler_tp_head_pan_step():
     tp_head_pan(pan_txt, pan_confm_lbl, reset_btn, ser_rambo)
     
+# def handler_tp_home_set():
+#     tp_home_xyz('set', ser_rambo)
+    
 def handler_mpfcs_run():
     mpfcs_run(reset_VNA, start_btn, mpcnc_vol_length_txt, mpcnc_vol_width_txt,\
               mpcnc_dwell_duration_txt, mpcnc_x_step_size_txt,\
@@ -83,21 +86,21 @@ def handler_manual_loc_z():
     x_loc = 0; y_loc = 0; reset = False;
     manual_set_mpcnc_xyz(x_loc, y_loc, z_loc, manual_speed, reset, ser_rambo)
 
-def handler_manual_step_loc_switch():
-    if manual_loc_edit.get() == 0:
-        manual_x_step_size_btn.configure(state = 'enabled')
-        manual_y_step_size_btn.configure(state = 'enabled')
-        manual_z_step_size_btn.configure(state = 'enabled')
-        manual_x_btn.configure(state = 'disabled')
-        manual_y_btn.configure(state = 'disabled')
-        manual_z_btn.configure(state = 'disabled')
-    else:
-        manual_x_step_size_btn.configure(state = 'disabled')
-        manual_y_step_size_btn.configure(state = 'disabled')
-        manual_z_step_size_btn.configure(state = 'disabled')
-        manual_x_btn.configure(state = 'enabled')
-        manual_y_btn.configure(state = 'enabled')
-        manual_z_btn.configure(state = 'enabled')
+# def handler_manual_step_loc_switch():
+#     if manual_loc_edit.get() == 0:
+#         manual_x_step_size_btn.configure(state = 'enabled')
+#         manual_y_step_size_btn.configure(state = 'enabled')
+#         manual_z_step_size_btn.configure(state = 'enabled')
+#         manual_x_btn.configure(state = 'disabled')
+#         manual_y_btn.configure(state = 'disabled')
+#         manual_z_btn.configure(state = 'disabled')
+#     else:
+#         manual_x_step_size_btn.configure(state = 'disabled')
+#         manual_y_step_size_btn.configure(state = 'disabled')
+#         manual_z_step_size_btn.configure(state = 'disabled')
+#         manual_x_btn.configure(state = 'enabled')
+#         manual_y_btn.configure(state = 'enabled')
+#         manual_z_btn.configure(state = 'enabled')
 
 def handler_manual_reset():
     reset = True
@@ -464,8 +467,12 @@ tab_ctrl.add(CalibTab, text = 'MPFCS Manual Control')
 tab_ctrl.pack(expand= True, fill='both')
 
 ##################################### MPFCS Tab
+
+# Live Frame -------------------------------
 Live_Panel = ttk.LabelFrame(MPFCSTab, text = 'Live View')
 Live_Panel.pack(fill = tk.BOTH, expand = True, side = 'left')
+
+# Tilt/Pan Frame -------------------------------
 
 tp_label_frame = ttk.LabelFrame(MPFCSTab, text = 'Tilt and Pan')
 tp_label_frame.pack(fill=tk.BOTH, expand=True, side = 'left')
@@ -476,6 +483,7 @@ tilt_txt = tk.Entry(tp_label_frame, width = 10, state = 'normal')
 tilt_txt.grid(row = 1, column = 1)
 tilt_confm_lbl = tk.Label(tp_label_frame, text = "")
 tilt_confm_lbl.grid(row = 1, column = 3)
+tilt_txt.insert(tk.END, '0')
 
 pan_lbl = tk.Label(tp_label_frame, text = "Pan Servo Angle (0-180):")
 pan_lbl.grid(row = 2, column = 0)
@@ -483,18 +491,22 @@ pan_txt = tk.Entry(tp_label_frame, width = 10, state = 'normal')
 pan_txt.grid(row = 2, column = 1)
 pan_confm_lbl = tk.Label(tp_label_frame, text = "")
 pan_confm_lbl.grid(row = 2, column = 3)
+pan_txt.insert(tk.END, '0')
 
 # tk.Button layouts
-tilt_btn1 = tk.Button(tp_label_frame, text= 'SEND', command = handler_tp_head_tilt)
+tilt_btn1 = tk.Button(tp_label_frame, text= 'Send', command = handler_tp_head_tilt)
 tilt_btn1.grid(row = 1, column = 2)
 
-pan_btn1 = tk.Button(tp_label_frame, text= 'SEND', command = handler_tp_head_pan)
+pan_btn1 = tk.Button(tp_label_frame, text= 'Send', command = handler_tp_head_pan)
 pan_btn1.grid(row = 2, column = 2)
 
-reset_btn = tk.Button(tp_label_frame, text="RESET", command = vna_buttons_reset, state = 'disabled',  bg="red", fg="black", font = 'Helvetica 18 bold')
-reset_btn.grid(row = 3, column = 2, pady = 30)
+# tp_home_set_btn = tk.Button(tp_label_frame, text= 'Set Tilt/Pan Home', command = handler_tp_home_set)
+# tp_home_set_btn.grid(row = 3, column = 0)
 
-##################################################
+reset_btn = tk.Button(tp_label_frame, text="Reset", command = vna_buttons_reset, state = 'disabled',  bg="red", fg="black", font = 'Helvetica 10')
+reset_btn.grid(row = 3, column = 2, pady = 5)
+
+# MPFCS Frame -------------------------------
 
 mpfcs_setup_frame = ttk.LabelFrame(MPFCSTab, text = '')
 mpfcs_setup_frame.pack(fill=tk.BOTH, expand=True,side = 'left')
@@ -575,13 +587,20 @@ filename_txt.grid(row = 13, column = 1)
 filename_txt.insert(tk.END, 'vna_00')
 
 submit_val = tk.Button(mpfcs_setup_frame, text = 'Check Inputs', command = handler_submit_values, font = 'Helvetica 10 bold')
-submit_val.grid(row = 14, column = 1, padx = 5, pady = 5)
+submit_val.grid(row = 14, column = 0, padx = 5, pady = 5)
 
 reset_VNA = tk.Button(mpfcs_setup_frame, text = 'Reset Inputs', command = handler_vna_reset, state = 'disabled', font = 'Helvetica 10 bold')
-reset_VNA.grid(row = 15, column = 1, padx = 5, pady = 5)
+reset_VNA.grid(row = 14, column = 1, padx = 5, pady = 5)
+
+home_set_btn = tk.Button(mpfcs_setup_frame, text= 'Set XYZ Home', command = handler_home_set)
+home_set_btn.grid(row = 15, column = 0)
+
+go_home_xyz_btn = tk.Button(mpfcs_setup_frame, text= 'Go XYZ Home', command = handler_go_home_xyz)
+go_home_xyz_btn.grid(row = 15, column = 1)
 
 start_btn = tk.Button(mpfcs_setup_frame, text= 'Start', command = handler_mpfcs_run, bg="green", fg="black", font = 'Helvetica 18 bold')
-start_btn.grid(row = 16, column = 1, padx = 10, pady = 10)
+start_btn.grid(row = 16, column = 1, padx = 10, pady = 5)
+start_btn.configure(state = 'disabled')
 
 ##################################### Graphing Tab
 graph_tab_label_frame =  ttk.LabelFrame(GraphTab, text = 'Log File Name:')
