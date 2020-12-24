@@ -5,6 +5,7 @@ create 3D graphs of electromagnetic fields for wireless power systems.
 @authors: usmank13, chasewhyte, Tri Nguyen
 
 """
+DEBUG = True
 
 import numpy as np
 import serial
@@ -20,25 +21,28 @@ from Backend.mpfcs_vna import vna_init, vna_record#, vna_q_calc
 from Backend.mpfcs_tp_head import tp_head_tilt, tp_head_pan, tp_head_resets
 from Backend.mpfcs_mpcnc import mpcnc_move_xyz, mpcnc_pause
 
-# Initializing communication 
-# rm = visa.ResourceManager()
-# visa_vna = rm.open_resource('GPIB0::16')
-# print("VNA: {}".format(visa_vna.query('*IDN?')))
-# ser_rambo = serial.Serial('COM6') # name of port, this might be different because of the hub we use
-# ser_rambo.baudrate = 250000
-# print("RAMBo Controller for MPCNC: {}".format(ser_rambo.name))
+emergency_stop_triggered = False
+
+if DEBUG == False:
+#     Initializing communication 
+    rm = visa.ResourceManager()
+    visa_vna = rm.open_resource('GPIB0::16')
+    print("VNA: {}".format(visa_vna.query('*IDN?')))
+    ser_rambo = serial.Serial('COM6') # name of port, this might be different because of the hub we use
+    ser_rambo.baudrate = 250000
+    print("RAMBo Controller for MPCNC: {}".format(ser_rambo.name))
 
 def handler_tp_head_tilt():
     tp_head_tilt(tilt_txt, tilt_confm_lbl, pan_txt, ser_rambo)
     
 def handler_tp_head_pan():
-    tp_head_pan(pan_txt, pan_confm_lbl, reset_btn, ser_rambo)
+    tp_head_pan(pan_txt, pan_confm_lbl, tp_reset_btn, ser_rambo)
     
 def handler_tp_head_tilt_step():
     tp_head_tilt(tilt_txt, tilt_confm_lbl, pan_txt, ser_rambo)
     
 def handler_tp_head_pan_step():
-    tp_head_pan(pan_txt, pan_confm_lbl, reset_btn, ser_rambo)
+    tp_head_pan(pan_txt, pan_confm_lbl, tp_reset_btn, ser_rambo)
     
 # def handler_tp_home_set():
 #     tp_home_xyz('set', ser_rambo)
@@ -49,42 +53,46 @@ def handler_mpfcs_run():
               mpcnc_y_step_size_txt, mpcnc_vol_height_txt, vna_center_freq_txt,\
               vna_span_txt, vna_sweep_pts_txt, mpcnc_z_step_size_txt,\
               filename_txt, mpfcs_setup_frame)
+
+def handler_mpfcs_stop():
+    ser_rambo.write(("M0").encode())
+    ser_rambo.write(b'\n') 
     
 def handler_manual_step_x():
     x_step = int(manual_x_step_size_txt.get())
     manual_speed = int(manual_speed_txt.get())
     y_step = 0; z_step = 0; reset = False;
-    manual_set_mpcnc_xyz(x_step, y_step, z_step, manual_speed, reset, ser_rambo)
+    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
     
 def handler_manual_step_y():
     y_step = int(manual_y_step_size_txt.get())
     manual_speed = int(manual_speed_txt.get())
     x_step = 0; z_step = 0; reset = False;
-    manual_set_mpcnc_xyz(x_step, y_step, z_step, manual_speed, reset, ser_rambo)
+    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
     
 def handler_manual_step_z():
     z_step = int(manual_z_step_size_txt.get())
     manual_speed = int(manual_speed_txt.get())
     x_step = 0; y_step = 0; reset = False;
-    manual_set_mpcnc_xyz(x_step, y_step, z_step, manual_speed, reset, ser_rambo)
+    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
     
 def handler_manual_loc_x():
     x_loc = int(manual_x_txt.get())
     manual_speed = int(manual_speed_txt.get())
     y_loc = 0; z_loc = 0; reset = False;
-    manual_set_mpcnc_xyz(x_loc, y_loc, z_loc, manual_speed, reset, ser_rambo)
+    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
     
 def handler_manual_loc_y():
     y_loc = int(manual_y_txt.get())
     manual_speed = int(manual_speed_txt.get())
     x_loc = 0; z_loc = 0; reset = False;
-    manual_set_mpcnc_xyz(x_loc, y_loc, z_loc, manual_speed, reset, ser_rambo)
+    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
     
 def handler_manual_loc_z():
     z_loc = int(manual_z_txt.get())
     manual_speed = int(manual_speed_txt.get())
     x_loc = 0; y_loc = 0; reset = False;
-    manual_set_mpcnc_xyz(x_loc, y_loc, z_loc, manual_speed, reset, ser_rambo)
+    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
 
 # def handler_manual_step_loc_switch():
 #     if manual_loc_edit.get() == 0:
@@ -105,10 +113,10 @@ def handler_manual_loc_z():
 def handler_manual_reset():
     reset = True
     x_step = 0; y_step = 0; z_step = 0;
-    manual_set_mpcnc_xyz(x_step, y_step, z_step, manual_speed, reset, ser_rambo)
+    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
     
 def handler_go_home_x():
-    mpcnc_home_xyz('x', int(manual_speed_txt.get()), ser_rambo)
+    mpcnc_home_xyz('x', int(manual_speed_txt.get()), manual_x_txt, manual_y_txt, manual_z_txt, ser_rambo)
     
 def handler_go_home_y():
     mpcnc_home_xyz('y', int(manual_speed_txt.get()), ser_rambo)
@@ -124,10 +132,10 @@ def handler_home_set():
     
     
 def handler_tp_head_resets():
-    tp_head_resets(reset_btn, tilt_txt, ser_rambo)
+    tp_head_resets(tp_reset_btn, tilt_txt, ser_rambo)
         
 def handler_submit_values():
-    submit_values(submit_val,start_btn,reset_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,mpcnc_dwell_duration_txt,mpcnc_x_step_size_txt,mpcnc_y_step_size_txt,mpcnc_vol_height_txt,vna_center_freq_txt,vna_span_txt,vna_sweep_pts_txt,mpcnc_z_step_size_txt,filename_txt)
+    submit_values(submit_val,start_btn,tp_reset_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,mpcnc_dwell_duration_txt,mpcnc_x_step_size_txt,mpcnc_y_step_size_txt,mpcnc_vol_height_txt,vna_center_freq_txt,vna_span_txt,vna_sweep_pts_txt,mpcnc_z_step_size_txt,filename_txt)
     
 def handler_vna_reset():
     vna_buttons_reset(reset_VNA,submit_val,mpcnc_vol_length_txt,mpcnc_vol_width_txt,mpcnc_dwell_duration_txt,mpcnc_x_step_size_txt,mpcnc_y_step_size_txt,mpcnc_vol_height_txt,vna_center_freq_txt,vna_span_txt,vna_sweep_pts_txt,mpcnc_z_step_size_txt,filename_txt)
@@ -295,16 +303,15 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,\
 #                     print("Pos Tilt3 Deg = {}".format(tilt_deg))
 #                     print("Pos Pan Deg = {}".format(tilt_deg))
         ser_rambo.write(("M280"+" P0"+" S"+str(tilt_deg)).encode()) # Roll serial write
-        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+        ser_rambo.write(b'\n') 
         ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
         ser_rambo.write(b'\n')
         time.sleep(0.2)
         ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()) # Roll serial write
-        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+        ser_rambo.write(b'\n') 
         ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
         ser_rambo.write(b'\n')
         time.sleep(0.2)
-
              
     for tilt_deg in reversed(deg_range):
 #                     print("Neg Pan Deg = {}".format(tilt_deg))
@@ -315,7 +322,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,\
         time.sleep(0.5)
 #                     print("Neg Tilt3 Deg = {}".format(tilt_deg))                    
         ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()) # Roll serial write
-        ser_rambo.write(b'\n') # Anything written to the MPCNC using pyserial.write has to be in bytes
+        ser_rambo.write(b'\n') 
         ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
         ser_rambo.write(b'\n')
         time.sleep(0.5)
@@ -503,14 +510,14 @@ pan_btn1.grid(row = 2, column = 2)
 # tp_home_set_btn = tk.Button(tp_label_frame, text= 'Set Tilt/Pan Home', command = handler_tp_home_set)
 # tp_home_set_btn.grid(row = 3, column = 0)
 
-reset_btn = tk.Button(tp_label_frame, text="Reset", command = vna_buttons_reset, state = 'disabled',  bg="red", fg="black", font = 'Helvetica 10')
-reset_btn.grid(row = 3, column = 2, pady = 5)
+tp_reset_btn = tk.Button(tp_label_frame, text="Reset to 0deg", command = vna_buttons_reset, state = 'disabled',  bg="red", fg="black", font = 'Helvetica 10')
+tp_reset_btn.grid(row = 3, column = 2, pady = 5)
 
 # MPFCS Frame -------------------------------
 
 mpfcs_setup_frame = ttk.LabelFrame(MPFCSTab, text = '')
 mpfcs_setup_frame.pack(fill=tk.BOTH, expand=True,side = 'left')
-tk.Label(mpfcs_setup_frame, text = "MPCNC Setup ------------").grid(row = 0, column = 0)
+tk.Label(mpfcs_setup_frame, text = "MPCNC Setup - Head XYZ(mm): "+str(manual_x_txt.get())+","+str(manual_x_txt.get())+","+str(manual_x_txt.get())).grid(row = 0, column = 0)
 
 mpcnc_vol_length_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Length (mm): ")
 mpcnc_vol_length_lbl.grid(row = 1, column = 0)
@@ -599,8 +606,12 @@ go_home_xyz_btn = tk.Button(mpfcs_setup_frame, text= 'Go XYZ Home', command = ha
 go_home_xyz_btn.grid(row = 15, column = 1)
 
 start_btn = tk.Button(mpfcs_setup_frame, text= 'Start', command = handler_mpfcs_run, bg="green", fg="black", font = 'Helvetica 18 bold')
-start_btn.grid(row = 16, column = 1, padx = 10, pady = 5)
+start_btn.grid(row = 16, column = 0, padx = 10, pady = 5)
 start_btn.configure(state = 'disabled')
+
+stop_btn = tk.Button(mpfcs_setup_frame, text= 'Stop', command = handler_mpfcs_stop, bg="red", fg="black", font = 'Helvetica 18 bold')
+stop_btn.grid(row = 16, column = 1, padx = 10, pady = 5)
+stop_btn.configure(state = 'disabled')
 
 ##################################### Graphing Tab
 graph_tab_label_frame =  ttk.LabelFrame(GraphTab, text = 'Log File Name:')
@@ -784,6 +795,9 @@ manual_reset_btn.grid(row = 4, column = 0)
 
 #initialize the timer
 hours_took = 0
+if DEBUG == False:
+    tp_head_resets(tp_reset_btn, tilt_txt, pan_txt, ser_rambo)
+    mpcnc_home_xyz('xyz', int(manual_speed_txt.get()), manual_x_txt, manual_y_txt, manual_z_txt, ser_rambo)
 
 ######################### end of code
 
