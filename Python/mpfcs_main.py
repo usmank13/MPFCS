@@ -5,7 +5,7 @@ create 3D graphs of electromagnetic fields for wireless power systems.
 @authors: usmank13, chasewhyte, Tri Nguyen
 
 """
-DEBUG = True
+DEBUG = False
 
 import numpy as np
 import serial
@@ -19,7 +19,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from Frontend.mpfcs_gui_button_functions import submit_values, vna_buttons_reset
 from Backend.mpfcs_vna import vna_init, vna_record#, vna_q_calc
 from Backend.mpfcs_tp_head import tp_head_tilt, tp_head_pan, tp_head_resets
-from Backend.mpfcs_mpcnc import mpcnc_move_xyz, mpcnc_pause
+from Backend.mpfcs_mpcnc import mpcnc_move_xyz, mpcnc_pause, mpcnc_home_xyz, mpcnc_pos_read
 
 emergency_stop_triggered = False
 
@@ -31,68 +31,77 @@ if DEBUG == False:
     ser_rambo = serial.Serial('COM6') # name of port, this might be different because of the hub we use
     ser_rambo.baudrate = 250000
     print("RAMBo Controller for MPCNC: {}".format(ser_rambo.name))
+    print("10sec Delay for Boot-up...")
+    time.sleep(10)
 
 def handler_tp_head_tilt():
-    tp_head_tilt(tilt_txt, tilt_confm_lbl, pan_txt, ser_rambo)
+    tp_head_tilt(tilt_entry_txt, tilt_confm_lbl, tp_reset_btn, ser_rambo)
     
 def handler_tp_head_pan():
-    tp_head_pan(pan_txt, pan_confm_lbl, tp_reset_btn, ser_rambo)
+    tp_head_pan(pan_entry_txt, pan_confm_lbl, tp_reset_btn, ser_rambo)
     
 def handler_tp_head_tilt_step():
-    tp_head_tilt(tilt_txt, tilt_confm_lbl, pan_txt, ser_rambo)
+    tp_head_tilt(tilt_entry_txt, tilt_confm_lbl, tp_reset_btn, ser_rambo)
     
 def handler_tp_head_pan_step():
-    tp_head_pan(pan_txt, pan_confm_lbl, tp_reset_btn, ser_rambo)
+    tp_head_pan(pan_entry_txt, pan_confm_lbl, tp_reset_btn, ser_rambo)
     
 # def handler_tp_home_set():
 #     tp_home_xyz('set', ser_rambo)
     
 def handler_mpfcs_run():
-    mpfcs_run(reset_VNA, start_btn, mpcnc_vol_length_txt, mpcnc_vol_width_txt,\
-              mpcnc_dwell_duration_txt, mpcnc_x_step_size_txt,\
-              mpcnc_y_step_size_txt, mpcnc_vol_height_txt, vna_center_freq_txt,\
-              vna_span_txt, vna_sweep_pts_txt, mpcnc_z_step_size_txt,\
-              filename_txt, mpfcs_setup_frame)
+    mpfcs_run(reset_VNA, start_btn, mpcnc_vol_length_entry_txt, mpcnc_vol_width_entry_txt,\
+              mpcnc_dwell_duration_entry_txt, mpcnc_x_step_size_entry_txt,\
+              mpcnc_y_step_size_entry_txt, mpcnc_vol_height_entry_txt, vna_center_freq_entry_txt,\
+              vna_span_entry_txt, vna_sweep_pts_entry_txt, mpcnc_z_step_size_entry_txt,\
+              filename_entry_txt, mpfcs_setup_frame)
 
 def handler_mpfcs_stop():
     ser_rambo.write(("M0").encode())
     ser_rambo.write(b'\n') 
     
-def handler_manual_step_x():
-    x_step = int(manual_x_step_size_txt.get())
-    manual_speed = int(manual_speed_txt.get())
-    y_step = 0; z_step = 0; reset = False;
-    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
+def handler_manual_step_pos_x():
+    manual_x_step_size_entry_txt = mpcnc_x_step_size_entry_txt #!!! REPLACE WITH MINIMUM STEP
+    manual_x_entry_txt.set(str(float(manual_x_entry_txt.get()) + float(manual_x_step_size_entry_txt.get())))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
-def handler_manual_step_y():
-    y_step = int(manual_y_step_size_txt.get())
-    manual_speed = int(manual_speed_txt.get())
-    x_step = 0; z_step = 0; reset = False;
-    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
+def handler_manual_step_neg_x():
+    manual_x_step_size_entry_txt = tk.StringVar()
+    manual_x_step_size_entry_txt.set(str(-float(mpcnc_x_step_size_entry_txt.get()))) #!!! REPLACE WITH MINIMUM STEP
+    manual_x_entry_txt.set(str(float(manual_x_entry_txt.get()) + float(manual_x_step_size_entry_txt.get())))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
-def handler_manual_step_z():
-    z_step = int(manual_z_step_size_txt.get())
-    manual_speed = int(manual_speed_txt.get())
-    x_step = 0; y_step = 0; reset = False;
-    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
+def handler_manual_step_pos_y():
+    manual_y_step_size_entry_txt = mpcnc_y_step_size_entry_txt #!!! REPLACE WITH MINIMUM STEP
+    manual_y_entry_txt.set(str(float(manual_y_entry_txt.get()) + float(manual_y_step_size_entry_txt.get())))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
-def handler_manual_loc_x():
-    x_loc = int(manual_x_txt.get())
-    manual_speed = int(manual_speed_txt.get())
-    y_loc = 0; z_loc = 0; reset = False;
-    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
+def handler_manual_step_neg_y():
+    manual_y_step_size_entry_txt = tk.StringVar()
+    manual_y_step_size_entry_txt.set(str(-float(mpcnc_y_step_size_entry_txt.get()))) #!!! REPLACE WITH MINIMUM STEP
+    manual_y_entry_txt.set(str(float(manual_y_entry_txt.get()) + float(manual_y_step_size_entry_txt.get())))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
-def handler_manual_loc_y():
-    y_loc = int(manual_y_txt.get())
-    manual_speed = int(manual_speed_txt.get())
-    x_loc = 0; z_loc = 0; reset = False;
-    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
+def handler_manual_step_pos_z():
+    manual_z_step_size_entry_txt = mpcnc_z_step_size_entry_txt #!!! REPLACE WITH MINIMUM STEP
+    manual_z_entry_txt.set(str(float(manual_z_entry_txt.get()) + float(manual_z_step_size_entry_txt.get())))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
-def handler_manual_loc_z():
-    z_loc = int(manual_z_txt.get())
-    manual_speed = int(manual_speed_txt.get())
-    x_loc = 0; y_loc = 0; reset = False;
-    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
+def handler_manual_step_neg_z():
+    manual_z_step_size_entry_txt = tk.StringVar()
+    manual_z_step_size_entry_txt.set(str(-float(mpcnc_z_step_size_entry_txt.get()))) #!!! REPLACE WITH MINIMUM STEP
+    manual_z_entry_txt.set(str(float(manual_z_entry_txt.get()) + float(manual_z_step_size_entry_txt.get())))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+    
+def handler_manual_loc():
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
 # def handler_manual_step_loc_switch():
 #     if manual_loc_edit.get() == 0:
@@ -111,34 +120,41 @@ def handler_manual_loc_z():
 #         manual_z_btn.configure(state = 'enabled')
 
 def handler_manual_reset():
-    reset = True
-    x_step = 0; y_step = 0; z_step = 0;
-    mpcnc_move_xyz(x_step, y_step, z_step, manual_speed, ser_rambo)
+    manual_x_entry_txt.set(str(0))
+    manual_y_entry_txt.set(str(0))
+    manual_z_entry_txt.set(str(0))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_go_home_x():
-    mpcnc_home_xyz('x', int(manual_speed_txt.get()), manual_x_txt, manual_y_txt, manual_z_txt, ser_rambo)
+    mpcnc_home_xyz('x', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
     
 def handler_go_home_y():
-    mpcnc_home_xyz('y', int(manual_speed_txt.get()), ser_rambo)
+    mpcnc_home_xyz('y', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
     
 def handler_go_home_z():
-    mpcnc_home_xyz('z', int(manual_speed_txt.get()), ser_rambo)
+    mpcnc_home_xyz('z', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
     
 def handler_go_home_xyz():
-    mpcnc_home_xyz('xyz', int(manual_speed_txt.get()), ser_rambo)
+    mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
 
 def handler_home_set():
-    mpcnc_home_xyz('set', int(manual_speed_txt.get()), ser_rambo)    
-    
+    mpcnc_home_xyz('set', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)    
     
 def handler_tp_head_resets():
-    tp_head_resets(tp_reset_btn, tilt_txt, ser_rambo)
+    tp_head_resets(tp_reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo)
         
 def handler_submit_values():
-    submit_values(submit_val,start_btn,tp_reset_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,mpcnc_dwell_duration_txt,mpcnc_x_step_size_txt,mpcnc_y_step_size_txt,mpcnc_vol_height_txt,vna_center_freq_txt,vna_span_txt,vna_sweep_pts_txt,mpcnc_z_step_size_txt,filename_txt)
+    submit_values(submit_val, start_btn, tp_reset_btn, mpcnc_vol_length_entry_txt, mpcnc_vol_width_entry_txt,\
+                  mpcnc_dwell_duration_entry_txt, mpcnc_x_step_size_entry_txt, mpcnc_y_step_size_entry_txt,\
+                  mpcnc_vol_height_entry_txt, vna_center_freq_entry_txt, vna_span_entry_txt, vna_sweep_pts_entry_txt,\
+                  mpcnc_z_step_size_entry_txt, filename_entry_txt)
     
 def handler_vna_reset():
-    vna_buttons_reset(reset_VNA,submit_val,mpcnc_vol_length_txt,mpcnc_vol_width_txt,mpcnc_dwell_duration_txt,mpcnc_x_step_size_txt,mpcnc_y_step_size_txt,mpcnc_vol_height_txt,vna_center_freq_txt,vna_span_txt,vna_sweep_pts_txt,mpcnc_z_step_size_txt,filename_txt)
+    vna_buttons_reset(reset_VNA, submit_val, mpcnc_vol_length_entry_txt, mpcnc_vol_width_entry_txt, \
+                      mpcnc_dwell_duration_entry_txt, mpcnc_x_step_size_entry_txt, mpcnc_y_step_size_entry_txt,\
+                      mpcnc_vol_height_entry_txt, vna_center_freq_entry_txt, vna_span_entry_txt,vna_sweep_pts_entry_txt,\
+                      mpcnc_z_step_size_entry_txt, filename_entry_txt)
 
 def handler_send():
     file_txt.configure(state = 'disabled')
@@ -147,7 +163,7 @@ def handler_reset_graph():
     file_txt.configure(state = 'normal')
     
 def handler_s11_plt():
-    filename_input = file_txt.get()
+    filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
     x, y, z, s11, _, _, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
@@ -161,7 +177,7 @@ def handler_s11_plt():
     plt.show()
     
 def handler_s12_plt():
-    filename_input = file_txt.get()
+    filename_input = file_entry_txt.get()
     # s12.configure(state = 'disabled')
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
@@ -176,7 +192,7 @@ def handler_s12_plt():
     plt.show()
     
 def handler_s22_plt():
-    filename_input = file_txt.get()
+    filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
     x, y, z, _, _, _, s22 = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
@@ -190,7 +206,7 @@ def handler_s22_plt():
     plt.show()
     
 def handler_s21_plt():
-    filename_input = file_txt.get()
+    filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
     x, y, z, _, _, s21, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
@@ -209,30 +225,30 @@ def handler_s21_plt():
 @param[in] reset_VNA: Reset button
 @param[in] start_btn: Start button
 
-@param[in] txt0-filename_txt: System input values
+@param[in] txt0-filename_entry_txt: System input values
 """
-def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,\
-              mpcnc_dwell_duration_txt,mpcnc_x_step_size_txt,\
-              mpcnc_y_step_size_txt,mpcnc_vol_height_txt,vna_center_freq_txt,\
-              vna_span_txt,vna_sweep_pts_txt,mpcnc_z_step_size_txt,\
-              filename_txt, mpfcs_setup_frame):
+def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_entry_txt,\
+              mpcnc_dwell_duration_entry_txt,mpcnc_x_step_size_entry_txt,\
+              mpcnc_y_step_size_entry_txt,mpcnc_vol_height_entry_txt,vna_center_freq_entry_txt,\
+              vna_span_entry_txt,vna_sweep_pts_entry_txt,mpcnc_z_step_size_entry_txt,\
+              filename_entry_txt, mpfcs_setup_frame):
     reset_VNA.configure(state = 'disabled')
     start_btn.configure(state = 'disabled')
     #getting user inputs
-    length = int(mpcnc_vol_length_txt.get())
+    length = int(mpcnc_vol_length_entry_txt.get())
     print("Length: " + str(length))
-    width = int(mpcnc_vol_width_txt.get())
+    width = int(mpcnc_vol_width_entry_txt.get())
     print("Width: " + str(width))
-    PauseDur = int(mpcnc_dwell_duration_txt.get())
-    xStep = int(mpcnc_x_step_size_txt.get())
-    yStep = int(mpcnc_y_step_size_txt.get())
-    depth = int(mpcnc_vol_height_txt.get())
+    PauseDur = int(mpcnc_dwell_duration_entry_txt.get())
+    xStep = int(mpcnc_x_step_size_entry_txt.get())
+    yStep = int(mpcnc_y_step_size_entry_txt.get())
+    depth = int(mpcnc_vol_height_entry_txt.get())
     print("Height: " + str(depth))
-    center_freq = float(vna_center_freq_txt.get())
-    span = int(vna_span_txt.get())
-    num_points = int(vna_sweep_pts_txt.get())
-    zStep = int(mpcnc_z_step_size_txt.get())
-    txt_fileName = filename_txt.get()
+    center_freq = float(vna_center_freq_entry_txt.get())
+    span = int(vna_span_entry_txt.get())
+    num_points = int(vna_sweep_pts_entry_txt.get())
+    zStep = int(mpcnc_z_step_size_entry_txt.get())
+    txt_fileName = filename_entry_txt.get()
     then = time.time()
 
     # initializing some values
@@ -264,8 +280,11 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,\
     #initialize VNA
     vna_init(num_points, visa_vna, center_freq, span)
     speed_default = 10*60 # 10mm/s*60s/1min
-    xVal = 0; yVal = 0; zVal = 0; speed = speed_default;
-    mpcnc_move_xyz(xVal, yVal, zVal, speed, ser_rambo) # to initialize position
+    manual_x_entry_txt.set(str(0))
+    manual_y_entry_txt.set(str(0))
+    manual_z_entry_txt.set(str(0))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
     #3D plots for s12, s11, s21, s22
 #     sPlot=plt.figure(1)
@@ -328,7 +347,8 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,\
         time.sleep(0.5)
         
     for z_coord in sampling_z_coordinates: # for each z plane 
-        print("\nz_coord = {}".format(z_coord))
+        manual_z_entry_txt.set(str(z_coord))
+        print("\nz_coord = {}".format(z_coord))        
         y_positive_direction = not(y_positive_direction)
 #         print("y_positive_direction = {}".format(y_positive_direction))
         if y_positive_direction == True:
@@ -338,6 +358,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,\
              
         for y_coord in _sampling_y_coordinates: # for each row
             f.write("\n")
+            manual_y_entry_txt.set(str(y_coord))
             print("\ny_coord = {}".format(y_coord))
             x_positive_direction = not(x_positive_direction)
 #             print("x_positive_direction = {}".format(x_positive_direction))
@@ -348,8 +369,10 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,\
              
             for x_coord in _sampling_x_coordinates: # moves the tool to each successive sampling spot in the row
                 speed = speed_default*2;
+                manual_x_entry_txt.set(str(x_coord))
                 print("x_coord = {}".format(x_coord))
-                mpcnc_move_xyz(x_coord, y_coord, z_coord, speed, ser_rambo) # to initialize position
+                mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
                 mpcnc_pause(PauseDur, ser_rambo) 
                 time.sleep(3)
   
@@ -411,8 +434,13 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,\
                 measurements[measurementIndex][7] = value3 # this is just s21 for now; can add the others later
                 measurementIndex += 1
                  
-    xVal = 0; yVal = 0; zVal = 0; speed = speed_default;
-    mpcnc_move_xyz(xVal, yVal, zVal, speed, ser_rambo) # to initialize position
+    
+    home_sel = 'x'
+    mpcnc_home_xyz(home_sel, manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
+
+    home_sel = 'y'
+    mpcnc_home_xyz(home_sel, manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
+    
 #     ser_rambo.write(('G0 Z0').encode())
 
     # write the numpy matrix to a file
@@ -432,32 +460,31 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_txt,mpcnc_vol_width_txt,\
     time_disp = tk.Label(mpfcs_setup_frame, text = hours_took, font = 'Helvetica 18 bold' )
     time_disp.grid( row = 15, column = 1, pady = 10, padx = 10)
     
-def mpcnc_step_xyz(x_step, y_step, z_step, manual_speed, setting, ser_rambo):
-    if setting == 0:
-        mpcnc_step_xyz.x_loc = 0
-        mpcnc_step_xyz.y_loc = 0
-        mpcnc_step_xyz.z_loc = 0
-    elif setting == 1:
-    # Getting user inputs    
-        mpcnc_step_xyz.x_loc += int(manual_x_step_size_txt.get())
-        print("X Location: " + str(mpcnc_step_xyz.x_loc))
-        mpcnc_step_xyz.y_loc += int(manual_y_step_size_txt.get())
-        print("Y Location: " + str(mpcnc_step_xyz.y_loc))
-        mpcnc_step_xyz.z_loc += int(manual_z_step_size_txt.get())
-        print("Z Location: " + str(mpcnc_step_xyz.z_loc))
-    else:
-        mpcnc_step_xyz.x_loc = x_step
-        mpcnc_step_xyz.y_loc = y_step
-        mpcnc_step_xyz.z_loc = z_step
-        
-    manual_x_txt.insert(tk.END, mpcnc_step_xyz.x_loc)
-    manual_y_txt.insert(tk.END, mpcnc_step_xyz.y_loc)
-    manual_z_txt.insert(tk.END, mpcnc_step_xyz.z_loc)
-    
-
-    speed_default = 10*60 # 10mm/s*60s/1min
-    speed = manual_speed;
-    mpcnc_move_xyz(mpcnc_step_xyz.x_loc, mpcnc_step_xyz.y_loc, mpcnc_step_xyz.z_loc, speed, ser_rambo) # to initialize position
+# def mpcnc_step_xyz(x_step, y_step, z_step, manual_speed, setting, ser_rambo):
+#     if setting == 0:
+#         mpcnc_step_xyz.x_loc = 0
+#         mpcnc_step_xyz.y_loc = 0
+#         mpcnc_step_xyz.z_loc = 0
+#     elif setting == 1:
+#     # Getting user inputs    
+#         mpcnc_step_xyz.x_loc += float(manual_x_step_size_entry_txt.get())
+#         print("X Location: " + str(mpcnc_step_xyz.x_loc))
+#         mpcnc_step_xyz.y_loc += float(manual_y_step_size_entry_txt.get())
+#         print("Y Location: " + str(mpcnc_step_xyz.y_loc))
+#         mpcnc_step_xyz.z_loc += float(manual_z_step_size_entry_txt.get())
+#         print("Z Location: " + str(mpcnc_step_xyz.z_loc))
+#     else:
+#         mpcnc_step_xyz.x_loc = float(x_step)
+#         mpcnc_step_xyz.y_loc = float(y_step)
+#         mpcnc_step_xyz.z_loc = float(z_step)
+#         
+#     manual_x_entry_txt.set(str(mpcnc_step_xyz.x_loc))
+#     manual_y_entry_txt.set(str(mpcnc_step_xyz.y_loc))
+#     manual_z_entry_txt.set(str(mpcnc_step_xyz.z_loc))
+# 
+#     speed_default = 10*60 # 10mm/s*60s/1min
+#     speed = manual_speed;
+#     mpcnc_move_xyz(mpcnc_step_xyz.x_loc, mpcnc_step_xyz.y_loc, mpcnc_step_xyz.z_loc, speed, ser_rambo) # to initialize position
 
 # Creating a Window of the Application
 window = tk.Tk()
@@ -473,189 +500,19 @@ tab_ctrl.add(GraphTab, text = 'Data Graphing')
 tab_ctrl.add(CalibTab, text = 'MPFCS Manual Control')
 tab_ctrl.pack(expand= True, fill='both')
 
-##################################### MPFCS Tab
-
-# Live Frame -------------------------------
-Live_Panel = ttk.LabelFrame(MPFCSTab, text = 'Live View')
-Live_Panel.pack(fill = tk.BOTH, expand = True, side = 'left')
-
-# Tilt/Pan Frame -------------------------------
-
-tp_label_frame = ttk.LabelFrame(MPFCSTab, text = 'Tilt and Pan')
-tp_label_frame.pack(fill=tk.BOTH, expand=True, side = 'left')
-
-tilt_lbl = tk.Label(tp_label_frame, text = "Tilt Angle (-90 to 90deg):")
-tilt_lbl.grid(row = 1, column = 0)
-tilt_txt = tk.Entry(tp_label_frame, width = 10, state = 'normal')
-tilt_txt.grid(row = 1, column = 1)
-tilt_confm_lbl = tk.Label(tp_label_frame, text = "")
-tilt_confm_lbl.grid(row = 1, column = 3)
-tilt_txt.insert(tk.END, '0')
-
-pan_lbl = tk.Label(tp_label_frame, text = "Pan Servo Angle (0-180):")
-pan_lbl.grid(row = 2, column = 0)
-pan_txt = tk.Entry(tp_label_frame, width = 10, state = 'normal')
-pan_txt.grid(row = 2, column = 1)
-pan_confm_lbl = tk.Label(tp_label_frame, text = "")
-pan_confm_lbl.grid(row = 2, column = 3)
-pan_txt.insert(tk.END, '0')
-
-# tk.Button layouts
-tilt_btn1 = tk.Button(tp_label_frame, text= 'Send', command = handler_tp_head_tilt)
-tilt_btn1.grid(row = 1, column = 2)
-
-pan_btn1 = tk.Button(tp_label_frame, text= 'Send', command = handler_tp_head_pan)
-pan_btn1.grid(row = 2, column = 2)
-
-# tp_home_set_btn = tk.Button(tp_label_frame, text= 'Set Tilt/Pan Home', command = handler_tp_home_set)
-# tp_home_set_btn.grid(row = 3, column = 0)
-
-tp_reset_btn = tk.Button(tp_label_frame, text="Reset to 0deg", command = vna_buttons_reset, state = 'disabled',  bg="red", fg="black", font = 'Helvetica 10')
-tp_reset_btn.grid(row = 3, column = 2, pady = 5)
-
-# MPFCS Frame -------------------------------
-
-mpfcs_setup_frame = ttk.LabelFrame(MPFCSTab, text = '')
-mpfcs_setup_frame.pack(fill=tk.BOTH, expand=True,side = 'left')
-tk.Label(mpfcs_setup_frame, text = "MPCNC Setup - Head XYZ(mm): "+str(manual_x_txt.get())+","+str(manual_x_txt.get())+","+str(manual_x_txt.get())).grid(row = 0, column = 0)
-
-mpcnc_vol_length_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Length (mm): ")
-mpcnc_vol_length_lbl.grid(row = 1, column = 0)
-mpcnc_vol_length_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-mpcnc_vol_length_txt.grid(row = 1, column = 1)
-mpcnc_vol_length_txt.insert(tk.END, '30')
-
-mpcnc_vol_width_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Width (mm):")
-mpcnc_vol_width_lbl.grid(row = 2, column = 0)
-mpcnc_vol_width_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-mpcnc_vol_width_txt.grid(row = 2, column = 1)
-mpcnc_vol_width_txt.insert(tk.END, '30')
-
-mpcnc_vol_height_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Height (mm):") # used to be called depth
-mpcnc_vol_height_lbl.grid(row = 3, column = 0)
-mpcnc_vol_height_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-mpcnc_vol_height_txt.grid(row = 3, column = 1)
-mpcnc_vol_height_txt.insert(tk.END, '20')
-
-mpcnc_x_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "X Step Size (mm):") ## used to be samplingF
-mpcnc_x_step_size_lbl.grid(row = 4, column = 0)
-mpcnc_x_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-mpcnc_x_step_size_txt.grid(row = 4, column = 1)
-mpcnc_x_step_size_txt.insert(tk.END, '10')
-
-mpcnc_y_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "Y Step Size (mm):")
-mpcnc_y_step_size_lbl.grid(row = 5, column = 0)
-mpcnc_y_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-mpcnc_y_step_size_txt.grid(row = 5, column = 1)
-mpcnc_y_step_size_txt.insert(tk.END, '10')
-
-mpcnc_z_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "Z Step Size (mm):")
-mpcnc_z_step_size_lbl.grid(row = 6, column = 0)
-mpcnc_z_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-mpcnc_z_step_size_txt.grid(row = 6, column = 1)
-mpcnc_z_step_size_txt.insert(tk.END, '10')
-
-mpcnc_dwell_duration_lbl = tk.Label(mpfcs_setup_frame, text = "Pause duration (s):")
-mpcnc_dwell_duration_lbl.grid(row = 7, column = 0)
-mpcnc_dwell_duration_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-mpcnc_dwell_duration_txt.grid(row = 7, column = 1)
-mpcnc_dwell_duration_txt.insert(tk.END, '1')
-
-# ttk.Separator(mpfcs_setup_frame,orient='horizontal').grid(row=7, columnspan=200)
-tk.Label(mpfcs_setup_frame, text = "VNA Setup ------------").grid(row = 8, column = 0)
-
-vna_center_freq_lbl = tk.Label(mpfcs_setup_frame, text = "Center Frequency (MHz):")
-vna_center_freq_lbl.grid(row = 9, column = 0)
-vna_center_freq_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-vna_center_freq_txt.grid(row = 9, column = 1)
-vna_center_freq_txt.insert(tk.END, '13.56')
-
-vna_span_lbl = tk.Label(mpfcs_setup_frame, text = "Span (MHz):")
-vna_span_lbl.grid(row = 10, column = 0)
-vna_span_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-vna_span_txt.grid(row = 10, column = 1)
-vna_span_txt.insert(tk.END, '2')
-
-vna_sweep_pts_lbl = tk.Label(mpfcs_setup_frame, text = "# Sweep Points:")
-vna_sweep_pts_lbl.grid(row = 11, column = 0)
-vna_sweep_pts_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-vna_sweep_pts_txt.grid(row = 11, column = 1)
-vna_sweep_pts_txt.insert(tk.END, '11')
-
-# s = ttk.Separator(mpfcs_setup_frame,orient='horizontal')
-# s.pack(side='top', fill='x')
-# ttk.Separator(mpfcs_setup_frame,orient='horizontal').grid(row=11, column=3, sticky='ns')
-tk.Label(mpfcs_setup_frame, text = "Logging Setup ------------").grid(row = 12, column = 0)
-
-filename_lbl = tk.Label(mpfcs_setup_frame, text = "Output File Name:")
-filename_lbl.grid(row = 13, column = 0)
-filename_txt = tk.Entry(mpfcs_setup_frame, width = 10)
-filename_txt.grid(row = 13, column = 1)
-filename_txt.insert(tk.END, 'vna_00')
-
-submit_val = tk.Button(mpfcs_setup_frame, text = 'Check Inputs', command = handler_submit_values, font = 'Helvetica 10 bold')
-submit_val.grid(row = 14, column = 0, padx = 5, pady = 5)
-
-reset_VNA = tk.Button(mpfcs_setup_frame, text = 'Reset Inputs', command = handler_vna_reset, state = 'disabled', font = 'Helvetica 10 bold')
-reset_VNA.grid(row = 14, column = 1, padx = 5, pady = 5)
-
-home_set_btn = tk.Button(mpfcs_setup_frame, text= 'Set XYZ Home', command = handler_home_set)
-home_set_btn.grid(row = 15, column = 0)
-
-go_home_xyz_btn = tk.Button(mpfcs_setup_frame, text= 'Go XYZ Home', command = handler_go_home_xyz)
-go_home_xyz_btn.grid(row = 15, column = 1)
-
-start_btn = tk.Button(mpfcs_setup_frame, text= 'Start', command = handler_mpfcs_run, bg="green", fg="black", font = 'Helvetica 18 bold')
-start_btn.grid(row = 16, column = 0, padx = 10, pady = 5)
-start_btn.configure(state = 'disabled')
-
-stop_btn = tk.Button(mpfcs_setup_frame, text= 'Stop', command = handler_mpfcs_stop, bg="red", fg="black", font = 'Helvetica 18 bold')
-stop_btn.grid(row = 16, column = 1, padx = 10, pady = 5)
-stop_btn.configure(state = 'disabled')
-
-##################################### Graphing Tab
-graph_tab_label_frame =  ttk.LabelFrame(GraphTab, text = 'Log File Name:')
-graph_tab_label_frame.pack(fill = tk.BOTH, expand = False)
-Parameters = ttk.LabelFrame(GraphTab, text = 'S-Parameter Selections')
-Parameters.pack(fill=tk.BOTH, expand=True)
-
-# Setting up layout
-file_name = tk.Label(graph_tab_label_frame, text = "File Name:")
-file_name.grid(row = 0, column = 0)
-file_txt = tk.Entry(graph_tab_label_frame, width = 20, state = 'normal')
-file_txt.grid(row = 0, column = 1)
-
-# setting up buttons
-
-btnSend = tk.Button(graph_tab_label_frame, text = 'Set', command = handler_send, state = 'normal', bg = 'green', fg = 'black')
-btnSend.grid(row = 0, column = 2, padx = 10, pady = 5)
-
-btnSend = tk.Button(graph_tab_label_frame, text = 'Reset', command = handler_reset_graph, state = 'normal', bg = 'red', fg = 'black')
-btnSend.grid(row = 0, column = 3, padx = 10, pady = 5)
-
-s11 = tk.Button(Parameters, text= 'S11', command = handler_s11_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
-s11.grid(row = 0, column = 0, padx = 10, pady = 5)
-
-s12 = tk.Button(Parameters, text= 'S12', command = handler_s12_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
-s12.grid(row = 0, column = 2, padx = 10, pady = 5)
-
-s22 = tk.Button(Parameters, text= 'S22', command = handler_s22_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
-s22.grid(row = 0, column = 4, padx = 10, pady = 5)
-
-s21 = tk.Button(Parameters, text= 'S21', command = handler_s21_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
-s21.grid(row = 0, column = 6, padx = 10, pady = 5)
-
 ################################################# Manual Motion Tab
 
 #-------------------------- MPFCS Manual Tilt/Pan Step
 
 manual_tp_label_frame =  ttk.LabelFrame(CalibTab, text = 'MPCNC Tilt/Pan')
 manual_tp_label_frame.pack(fill = tk.BOTH, expand=True, side = 'left')
-Parameters.pack(fill=tk.BOTH, expand=True)
+# Parameters.pack(fill=tk.BOTH, expand=True)
 
 manual_pan_lbl = tk.Label(manual_tp_label_frame, text = "Pan Angle (-90 to 90deg):")
 manual_pan_lbl.grid(row = 1, column = 0)
-manual_pan_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal')
+manual_pan_entry_txt = tk.StringVar()
+manual_pan_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_pan_entry_txt)
+manual_pan_entry_txt.set("0")
 manual_pan_txt.grid(row = 1, column = 1)
 manual_pan_confm_lbl = tk.Label(manual_tp_label_frame, text = "")
 manual_pan_confm_lbl.grid(row = 1, column = 3)
@@ -669,7 +526,9 @@ manual_pan_btn_step_neg.grid(row = 1, column = 4)
 
 manual_tilt_lbl = tk.Label(manual_tp_label_frame, text = "Tilt Angle (0 to 90deg):")
 manual_tilt_lbl.grid(row = 2, column = 0)
-manual_tilt_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal')
+manual_tilt_entry_txt = tk.StringVar()
+manual_tilt_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_tilt_entry_txt)
+manual_tilt_entry_txt.set("0")
 manual_tilt_txt.grid(row = 2, column = 1)
 manual_tilt_confm_lbl = tk.Label(manual_tp_label_frame, text = "")
 manual_tilt_confm_lbl.grid(row = 2, column = 3)
@@ -722,7 +581,7 @@ manual_xyz_label_frame.pack(fill = tk.BOTH, expand=True, side = 'right')
 # manual_x_step_size_lbl.grid(row = 1, column = 0)
 # manual_x_step_size_txt = tk.Entry(manual_xyz_label_frame, width = 10)
 # manual_x_step_size_txt.grid(row = 1, column = 1)
-# manual_x_step_size_txt.insert(tk.END, '10')
+# manual_x_step_size_txt.insert(0, '10')
 # manual_x_step_size_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_mpcnc_step_x)
 # manual_x_step_size_btn.grid(row = 1, column = 2)
 # manual_x_step_size_btn.configure(state = 'disabled')
@@ -747,57 +606,261 @@ manual_xyz_label_frame.pack(fill = tk.BOTH, expand=True, side = 'right')
 
 manual_x_lbl = tk.Label(manual_xyz_label_frame, text = "X Location (mm):") ## used to be samplingF
 manual_x_lbl.grid(row = 0, column = 0)
-manual_x_txt = tk.Entry(manual_xyz_label_frame, width = 10)
+manual_x_entry_txt = tk.StringVar()
+manual_x_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_x_entry_txt)
+manual_x_entry_txt.set("?")
 manual_x_txt.grid(row = 0, column = 1)
-manual_x_txt.insert(tk.END, '10')
-manual_x_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc_x)
+manual_x_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
 manual_x_btn.grid(row = 0, column = 2)
 
-manual_x_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_x)
+manual_x_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_pos_x)
 manual_x_step_pos_btn.grid(row = 0, column = 3)
-manual_x_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_x)
+manual_x_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_neg_x)
 manual_x_step_neg_btn.grid(row = 0, column = 4)
 
 manual_y_lbl = tk.Label(manual_xyz_label_frame, text = "Y Location (mm):")
 manual_y_lbl.grid(row = 1, column = 0)
-manual_y_txt = tk.Entry(manual_xyz_label_frame, width = 10)
+manual_y_entry_txt = tk.StringVar()
+manual_y_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_y_entry_txt)
+manual_y_entry_txt.set("?")
 manual_y_txt.grid(row = 1, column = 1)
-manual_y_txt.insert(tk.END, '10')
-manual_y_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc_y)
+manual_y_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
 manual_y_btn.grid(row = 1, column = 2)
-manual_y_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_y)
+manual_y_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_pos_y)
 manual_y_step_pos_btn.grid(row = 1, column = 3)
-manual_y_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_y)
+manual_y_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_neg_y)
 manual_y_step_neg_btn.grid(row = 1, column = 4)
 
 manual_z_lbl = tk.Label(manual_xyz_label_frame, text = "Z Location (mm):")
 manual_z_lbl.grid(row = 2, column = 0)
-manual_z_txt = tk.Entry(manual_xyz_label_frame, width = 10)
+manual_z_entry_txt = tk.StringVar()
+manual_z_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_z_entry_txt)
+manual_z_entry_txt.set("?")
 manual_z_txt.grid(row = 2, column = 1)
-manual_z_txt.insert(tk.END, '10')
-manual_z_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc_z)
+manual_z_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
 manual_z_btn.grid(row = 2, column = 2)
-manual_z_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_z)
+manual_z_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_pos_z)
 manual_z_step_pos_btn.grid(row = 2, column = 3)
-manual_z_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_z)
+manual_z_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_neg_z)
 manual_z_step_neg_btn.grid(row = 2, column = 4)
 
 manual_speed_lbl = tk.Label(manual_xyz_label_frame, text = "Speed (mm/s???):")
 manual_speed_lbl.grid(row = 3, column = 0)
+manual_speed_entry_txt = tk.StringVar()
+manual_speed_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_speed_entry_txt)
+manual_speed_entry_txt.set("600")
 manual_speed_txt = tk.Entry(manual_xyz_label_frame, width = 10)
 manual_speed_txt.grid(row = 3, column = 1)
-manual_speed_txt.insert(tk.END, '600')
-manual_speed_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc_z)
+manual_speed_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
 manual_speed_btn.grid(row = 3, column = 2)
 
 manual_reset_btn = tk.Button(manual_xyz_label_frame, text= 'Reset', bg="red", command = handler_manual_reset)
 manual_reset_btn.grid(row = 4, column = 0)
 
+##################################### MPFCS Tab
+
+# Live Frame -------------------------------
+Live_Panel = ttk.LabelFrame(MPFCSTab, text = 'Live View')
+Live_Panel.pack(fill = tk.BOTH, expand = True, side = 'left')
+
+# Tilt/Pan Frame -------------------------------
+
+tp_label_frame = ttk.LabelFrame(MPFCSTab, text = 'Tilt and Pan')
+tp_label_frame.pack(fill=tk.BOTH, expand=True, side = 'left')
+
+tilt_lbl = tk.Label(tp_label_frame, text = "Tilt Angle (-90 to 90deg):")
+tilt_lbl.grid(row = 1, column = 0)
+tilt_entry_txt = tk.StringVar()
+tilt_txt = tk.Entry(tp_label_frame, width = 10, textvariable=tilt_entry_txt)
+tilt_entry_txt.set("0")
+tilt_txt.grid(row = 1, column = 1)
+tilt_confm_lbl = tk.Label(tp_label_frame, text = "")
+tilt_confm_lbl.grid(row = 1, column = 3)
+
+pan_lbl = tk.Label(tp_label_frame, text = "Pan Servo Angle (0-180):")
+pan_lbl.grid(row = 2, column = 0)
+pan_entry_txt = tk.StringVar()
+pan_txt = tk.Entry(tp_label_frame, width = 10, textvariable=pan_entry_txt)
+pan_entry_txt.set("0")
+pan_txt.grid(row = 2, column = 1)
+pan_confm_lbl = tk.Label(tp_label_frame, text = "")
+pan_confm_lbl.grid(row = 2, column = 3)
+
+# tk.Button layouts
+tilt_btn1 = tk.Button(tp_label_frame, text= 'Send', command = handler_tp_head_tilt)
+tilt_btn1.grid(row = 1, column = 2)
+
+pan_btn1 = tk.Button(tp_label_frame, text= 'Send', command = handler_tp_head_pan)
+pan_btn1.grid(row = 2, column = 2)
+
+# tp_home_set_btn = tk.Button(tp_label_frame, text= 'Set Tilt/Pan Home', command = handler_tp_home_set)
+# tp_home_set_btn.grid(row = 3, column = 0)
+
+tp_reset_btn = tk.Button(tp_label_frame, text="Reset to 0deg", command = handler_tp_head_resets,\
+                         state = 'normal',  bg="red", fg="black", font = 'Helvetica 10')
+tp_reset_btn.grid(row = 3, column = 2, pady = 5)
+
+# MPFCS Frame -------------------------------
+
+mpfcs_setup_frame = ttk.LabelFrame(MPFCSTab, text = '')
+mpfcs_setup_frame.pack(fill=tk.BOTH, expand=True,side = 'left')
+tk.Label(mpfcs_setup_frame, text = "MPCNC Setup - Head XYZ(mm): "+manual_x_entry_txt.get()+","+manual_y_entry_txt.get()+","+manual_z_entry_txt.get()).grid(row = 0, column = 0)
+
+mpcnc_vol_length_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Length (mm): ")
+mpcnc_vol_length_lbl.grid(row = 1, column = 0)
+mpcnc_vol_length_entry_txt = tk.StringVar()
+mpcnc_vol_length_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_vol_length_entry_txt)
+mpcnc_vol_length_entry_txt.set("30")
+mpcnc_vol_length_txt.grid(row = 1, column = 1)
+
+mpcnc_vol_width_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Width (mm):")
+mpcnc_vol_width_lbl.grid(row = 2, column = 0)
+mpcnc_vol_width_entry_txt = tk.StringVar()
+mpcnc_vol_width_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_vol_width_entry_txt)
+mpcnc_vol_width_entry_txt.set("30")
+mpcnc_vol_width_txt.grid(row = 2, column = 1)
+
+mpcnc_vol_height_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Height (mm):") # used to be called depth
+mpcnc_vol_height_lbl.grid(row = 3, column = 0)
+mpcnc_vol_height_entry_txt = tk.StringVar()
+mpcnc_vol_height_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_vol_height_entry_txt)
+mpcnc_vol_height_entry_txt.set("20")
+mpcnc_vol_height_txt.grid(row = 3, column = 1)
+
+mpcnc_x_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "X Step Size (mm):") ## used to be samplingF
+mpcnc_x_step_size_lbl.grid(row = 4, column = 0)
+mpcnc_x_step_size_entry_txt = tk.StringVar()
+mpcnc_x_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_x_step_size_entry_txt)
+mpcnc_x_step_size_entry_txt.set("10")
+mpcnc_x_step_size_txt.grid(row = 4, column = 1)
+
+mpcnc_y_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "Y Step Size (mm):")
+mpcnc_y_step_size_lbl.grid(row = 5, column = 0)
+mpcnc_y_step_size_entry_txt = tk.StringVar()
+mpcnc_y_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_y_step_size_entry_txt)
+mpcnc_y_step_size_entry_txt.set("10")
+mpcnc_y_step_size_txt.grid(row = 5, column = 1)
+
+mpcnc_z_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "Z Step Size (mm):")
+mpcnc_z_step_size_lbl.grid(row = 6, column = 0)
+mpcnc_z_step_size_entry_txt = tk.StringVar()
+mpcnc_z_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_z_step_size_entry_txt)
+mpcnc_z_step_size_entry_txt.set("5")
+mpcnc_z_step_size_txt.grid(row = 6, column = 1)
+
+mpcnc_dwell_duration_lbl = tk.Label(mpfcs_setup_frame, text = "Pause duration (s):")
+mpcnc_dwell_duration_lbl.grid(row = 7, column = 0)
+mpcnc_dwell_duration_entry_txt = tk.StringVar()
+mpcnc_dwell_duration_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_dwell_duration_entry_txt)
+mpcnc_dwell_duration_entry_txt.set("1")
+mpcnc_dwell_duration_txt.grid(row = 7, column = 1)
+
+# ttk.Separator(mpfcs_setup_frame,orient='horizontal').grid(row=7, columnspan=200)
+tk.Label(mpfcs_setup_frame, text = "VNA Setup ------------").grid(row = 8, column = 0)
+
+vna_center_freq_lbl = tk.Label(mpfcs_setup_frame, text = "Center Frequency (MHz):")
+vna_center_freq_lbl.grid(row = 9, column = 0)
+vna_center_freq_entry_txt = tk.StringVar()
+vna_center_freq_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=vna_center_freq_entry_txt)
+vna_center_freq_entry_txt.set("13.56")
+vna_center_freq_txt.grid(row = 9, column = 1)
+
+vna_span_lbl = tk.Label(mpfcs_setup_frame, text = "Span (MHz):")
+vna_span_lbl.grid(row = 10, column = 0)
+vna_span_entry_txt = tk.StringVar()
+vna_span_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=vna_span_entry_txt)
+vna_span_entry_txt.set("2")
+vna_span_txt.grid(row = 10, column = 1)
+
+vna_sweep_pts_lbl = tk.Label(mpfcs_setup_frame, text = "# Sweep Points:")
+vna_sweep_pts_lbl.grid(row = 11, column = 0)
+vna_sweep_pts_entry_txt = tk.StringVar()
+vna_sweep_pts_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=vna_sweep_pts_entry_txt)
+vna_sweep_pts_entry_txt.set("11")
+vna_sweep_pts_txt.grid(row = 11, column = 1)
+
+# s = ttk.Separator(mpfcs_setup_frame,orient='horizontal')
+# s.pack(side='top', fill='x')
+# ttk.Separator(mpfcs_setup_frame,orient='horizontal').grid(row=11, column=3, sticky='ns')
+tk.Label(mpfcs_setup_frame, text = "Logging Setup ------------").grid(row = 12, column = 0)
+
+filename_lbl = tk.Label(mpfcs_setup_frame, text = "Output File Name:")
+filename_lbl.grid(row = 13, column = 0)
+filename_entry_txt = tk.StringVar()
+filename_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=filename_entry_txt)
+filename_entry_txt.set("vna_00")
+filename_txt.grid(row = 13, column = 1)
+
+submit_val = tk.Button(mpfcs_setup_frame, text = 'Check Inputs', command = handler_submit_values, font = 'Helvetica 10 bold')
+submit_val.grid(row = 14, column = 0, padx = 5, pady = 5)
+
+reset_VNA = tk.Button(mpfcs_setup_frame, text = 'Reset Inputs', command = handler_vna_reset, state = 'disabled', font = 'Helvetica 10 bold')
+reset_VNA.grid(row = 14, column = 1, padx = 5, pady = 5)
+
+home_set_btn = tk.Button(mpfcs_setup_frame, text= 'Set XYZ Home', command = handler_home_set)
+home_set_btn.grid(row = 15, column = 0)
+
+go_home_xyz_btn = tk.Button(mpfcs_setup_frame, text= 'Go XYZ Home', command = handler_go_home_xyz)
+go_home_xyz_btn.grid(row = 15, column = 1)
+
+start_btn = tk.Button(mpfcs_setup_frame, text= 'Start', command = handler_mpfcs_run, bg="green", fg="black", font = 'Helvetica 18 bold')
+start_btn.grid(row = 16, column = 0, padx = 10, pady = 5)
+start_btn.configure(state = 'disabled')
+
+stop_btn = tk.Button(mpfcs_setup_frame, text= 'Stop', command = handler_mpfcs_stop, bg="red", fg="black", font = 'Helvetica 18 bold')
+stop_btn.grid(row = 16, column = 1, padx = 10, pady = 5)
+stop_btn.configure(state = 'disabled')
+
+##################################### Graphing Tab
+graph_tab_label_frame =  ttk.LabelFrame(GraphTab, text = 'Log File Name:')
+graph_tab_label_frame.pack(fill = tk.BOTH, expand = False)
+Parameters = ttk.LabelFrame(GraphTab, text = 'S-Parameter Selections')
+Parameters.pack(fill=tk.BOTH, expand=True)
+
+# Setting up layout
+graph_file_name = tk.Label(graph_tab_label_frame, text = "File Name:")
+graph_file_name.grid(row = 0, column = 0)
+graph_filename_entry_txt = tk.StringVar()
+graph_filename_txt = tk.Entry(graph_tab_label_frame, width = 10, textvariable=filename_entry_txt)
+graph_filename_entry_txt.set("vna_00")
+graph_file_entry_txt = tk.StringVar()
+graph_file_txt = tk.Entry(graph_tab_label_frame, width = 20, textvariable=graph_file_entry_txt)
+graph_file_entry_txt.set("vna_01")
+graph_file_txt.grid(row = 0, column = 1)
+
+# setting up buttons
+
+btnSend = tk.Button(graph_tab_label_frame, text = 'Set', command = handler_send, state = 'normal', bg = 'green', fg = 'black')
+btnSend.grid(row = 0, column = 2, padx = 10, pady = 5)
+
+btnSend = tk.Button(graph_tab_label_frame, text = 'Reset', command = handler_reset_graph, state = 'normal', bg = 'red', fg = 'black')
+btnSend.grid(row = 0, column = 3, padx = 10, pady = 5)
+
+s11 = tk.Button(Parameters, text= 'S11', command = handler_s11_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s11.grid(row = 0, column = 0, padx = 10, pady = 5)
+
+s12 = tk.Button(Parameters, text= 'S12', command = handler_s12_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s12.grid(row = 0, column = 2, padx = 10, pady = 5)
+
+s22 = tk.Button(Parameters, text= 'S22', command = handler_s22_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s22.grid(row = 0, column = 4, padx = 10, pady = 5)
+
+s21 = tk.Button(Parameters, text= 'S21', command = handler_s21_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s21.grid(row = 0, column = 6, padx = 10, pady = 5)
+
 #initialize the timer
 hours_took = 0
 if DEBUG == False:
-    tp_head_resets(tp_reset_btn, tilt_txt, pan_txt, ser_rambo)
-    mpcnc_home_xyz('xyz', int(manual_speed_txt.get()), manual_x_txt, manual_y_txt, manual_z_txt, ser_rambo)
+#     manual_x_entry_txt.set(str(0))
+#     manual_y_entry_txt.set(str(0))
+#     manual_z_entry_txt.set(str(0))
+#     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+#                manual_z_entry_txt, manual_speed_entry_txt,\
+#                is_step, ser_rambo)
+    tilt_entry_txt.set("0")
+    pan_entry_txt.set("0")
+    tp_head_resets(tp_reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo)
+#     mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
 
 ######################### end of code
 
