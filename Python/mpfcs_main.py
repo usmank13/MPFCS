@@ -5,7 +5,7 @@ create 3D graphs of electromagnetic fields for wireless power systems.
 @authors: usmank13, chasewhyte, Tri Nguyen
 
 """
-DEBUG = False
+DEBUG = True
 
 import numpy as np
 import serial
@@ -35,16 +35,49 @@ if DEBUG == False:
     time.sleep(10)
 
 def handler_tp_head_tilt():
-    tp_head_tilt(tilt_entry_txt, tilt_confm_lbl, tp_reset_btn, ser_rambo)
+    tp_head_tilt(tilt_entry_txt, ser_rambo)
+    
+def handler_tp_head_tilt_step_pos():
+    if tilt_entry_txt.get() == '0':
+        manual_tilt_step = float(1)
+    else:
+        manual_tilt_step = float(tilt_entry_txt.get())
+        
+    tilt_entry_txt.set(str(float(tilt_entry_txt.get()) + manual_tilt_step))
+    tp_head_tilt(tilt_entry_txt, ser_rambo)
+    
+def handler_tp_head_tilt_step_neg():
+    if tilt_entry_txt.get() == '0':
+        manual_tilt_step = -float(1)
+    else:
+        manual_tilt_step = -float(tilt_entry_txt.get())
+        
+    tilt_entry_txt.set(str(float(tilt_entry_txt.get()) + manual_tilt_step))
+    tp_head_tilt(tilt_entry_txt, ser_rambo)
     
 def handler_tp_head_pan():
-    tp_head_pan(pan_entry_txt, pan_confm_lbl, tp_reset_btn, ser_rambo)
+    tp_head_pan(pan_entry_txt, ser_rambo)
     
-def handler_tp_head_tilt_step():
-    tp_head_tilt(tilt_entry_txt, tilt_confm_lbl, tp_reset_btn, ser_rambo)
+def handler_tp_head_pan_step_pos():
+    if pan_entry_txt.get() == '0':
+        manual_pan_step = float(1)
+    else:
+        manual_pan_step = float(pan_entry_txt.get())
+        
+    pan_entry_txt.set(str(float(pan_entry_txt.get()) + manual_pan_step))
+    tp_head_pan(pan_entry_txt, ser_rambo)
     
-def handler_tp_head_pan_step():
-    tp_head_pan(pan_entry_txt, pan_confm_lbl, tp_reset_btn, ser_rambo)
+def handler_tp_head_pan_step_neg():
+    if pan_entry_txt.get() == '0':
+        manual_pan_step = -float(1)
+    else:
+        manual_pan_step = -float(pan_entry_txt.get())
+        
+    pan_entry_txt.set(str(float(pan_entry_txt.get()) + manual_pan_step))
+    tp_head_pan(pan_entry_txt, ser_rambo)
+
+def handler_tp_head_resets():
+    tp_head_resets(tp_reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo)
     
 # def handler_tp_home_set():
 #     tp_home_xyz('set', ser_rambo)
@@ -61,41 +94,62 @@ def handler_mpfcs_stop():
     ser_rambo.write(b'\n') 
     
 def handler_manual_step_pos_x():
-    manual_x_step_size_entry_txt = mpcnc_x_step_size_entry_txt #!!! REPLACE WITH MINIMUM STEP
-    manual_x_entry_txt.set(str(float(manual_x_entry_txt.get()) + float(manual_x_step_size_entry_txt.get())))
+    if manual_x_step_entry_txt.get() == '0':
+        manual_x_step = float(1)
+    else:
+        manual_x_step = float(manual_x_step_entry_txt.get())
+        
+    manual_x_entry_txt.set(str(float(manual_x_entry_txt.get()) + manual_x_step))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_manual_step_neg_x():
-    manual_x_step_size_entry_txt = tk.StringVar()
-    manual_x_step_size_entry_txt.set(str(-float(mpcnc_x_step_size_entry_txt.get()))) #!!! REPLACE WITH MINIMUM STEP
-    manual_x_entry_txt.set(str(float(manual_x_entry_txt.get()) + float(manual_x_step_size_entry_txt.get())))
+    if manual_x_step_entry_txt.get() == '0':
+        manual_x_step = float(-1)
+    else:
+        manual_x_step = -float(manual_x_step_entry_txt.get())
+        
+    manual_x_entry_txt.set(str(float(manual_x_entry_txt.get()) + manual_x_step))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_manual_step_pos_y():
-    manual_y_step_size_entry_txt = mpcnc_y_step_size_entry_txt #!!! REPLACE WITH MINIMUM STEP
-    manual_y_entry_txt.set(str(float(manual_y_entry_txt.get()) + float(manual_y_step_size_entry_txt.get())))
+    if manual_y_step_entry_txt.get() == '0':
+        manual_y_step = float(1)
+    else:
+        manual_y_step = float(manual_y_step_entry_txt.get())
+        
+    manual_y_entry_txt.set(str(float(manual_y_entry_txt.get()) + manual_y_step))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_manual_step_neg_y():
-    manual_y_step_size_entry_txt = tk.StringVar()
-    manual_y_step_size_entry_txt.set(str(-float(mpcnc_y_step_size_entry_txt.get()))) #!!! REPLACE WITH MINIMUM STEP
-    manual_y_entry_txt.set(str(float(manual_y_entry_txt.get()) + float(manual_y_step_size_entry_txt.get())))
+    if manual_y_step_entry_txt.get() == '0':
+        manual_y_step = float(-1)
+    else:
+        manual_y_step = -float(manual_y_step_entry_txt.get())
+        
+    manual_y_entry_txt.set(str(float(manual_y_entry_txt.get()) + manual_y_step))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
-    
+
 def handler_manual_step_pos_z():
-    manual_z_step_size_entry_txt = mpcnc_z_step_size_entry_txt #!!! REPLACE WITH MINIMUM STEP
-    manual_z_entry_txt.set(str(float(manual_z_entry_txt.get()) + float(manual_z_step_size_entry_txt.get())))
+    if manual_z_step_entry_txt.get() == '0':
+        manual_z_step = float(1)
+    else:
+        manual_z_step = float(manual_z_step_entry_txt.get())
+        
+    manual_z_entry_txt.set(str(float(manual_z_entry_txt.get()) + manual_z_step))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_manual_step_neg_z():
-    manual_z_step_size_entry_txt = tk.StringVar()
-    manual_z_step_size_entry_txt.set(str(-float(mpcnc_z_step_size_entry_txt.get()))) #!!! REPLACE WITH MINIMUM STEP
-    manual_z_entry_txt.set(str(float(manual_z_entry_txt.get()) + float(manual_z_step_size_entry_txt.get())))
+    if manual_z_step_entry_txt.get() == '0':
+        manual_z_step = float(-1)
+    else:
+        manual_z_step = -float(manual_z_step_entry_txt.get())
+        
+    manual_z_entry_txt.set(str(float(manual_z_entry_txt.get()) + manual_z_step))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
@@ -140,9 +194,6 @@ def handler_go_home_xyz():
 
 def handler_home_set():
     mpcnc_home_xyz('set', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)    
-    
-def handler_tp_head_resets():
-    tp_head_resets(tp_reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo)
         
 def handler_submit_values():
     submit_values(submit_val, start_btn, tp_reset_btn, mpcnc_vol_length_entry_txt, mpcnc_vol_width_entry_txt,\
@@ -508,37 +559,47 @@ manual_tp_label_frame =  ttk.LabelFrame(CalibTab, text = 'MPCNC Tilt/Pan')
 manual_tp_label_frame.pack(fill = tk.BOTH, expand=True, side = 'left')
 # Parameters.pack(fill=tk.BOTH, expand=True)
 
-manual_pan_lbl = tk.Label(manual_tp_label_frame, text = "Pan Angle (-90 to 90deg):")
-manual_pan_lbl.grid(row = 1, column = 0)
-manual_pan_entry_txt = tk.StringVar()
-manual_pan_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_pan_entry_txt)
-manual_pan_entry_txt.set("0")
-manual_pan_txt.grid(row = 1, column = 1)
-manual_pan_confm_lbl = tk.Label(manual_tp_label_frame, text = "")
-manual_pan_confm_lbl.grid(row = 1, column = 3)
-
-manual_pan_btn = tk.Button(manual_tp_label_frame, text= 'Send', command = handler_tp_head_pan)
-manual_pan_btn.grid(row = 1, column = 2)
-manual_pan_btn_step_pos = tk.Button(manual_tp_label_frame, text= '+', command = handler_tp_head_pan_step)
-manual_pan_btn_step_pos.grid(row = 1, column = 3)
-manual_pan_btn_step_neg = tk.Button(manual_tp_label_frame, text= '-', command = handler_tp_head_pan_step)
-manual_pan_btn_step_neg.grid(row = 1, column = 4)
-
 manual_tilt_lbl = tk.Label(manual_tp_label_frame, text = "Tilt Angle (0 to 90deg):")
-manual_tilt_lbl.grid(row = 2, column = 0)
-manual_tilt_entry_txt = tk.StringVar()
-manual_tilt_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_tilt_entry_txt)
-manual_tilt_entry_txt.set("0")
-manual_tilt_txt.grid(row = 2, column = 1)
-manual_tilt_confm_lbl = tk.Label(manual_tp_label_frame, text = "")
-manual_tilt_confm_lbl.grid(row = 2, column = 3)
-
+manual_tilt_lbl.grid(row = 1, column = 0)
+tilt_entry_txt = tk.StringVar()
+manual_tilt_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=tilt_entry_txt)
+tilt_entry_txt.set("0")
+manual_tilt_txt.grid(row = 1, column = 1, padx=(10,10))
+# manual_tilt_confm_lbl = tk.Label(manual_tp_label_frame, text = "")
+# manual_tilt_confm_lbl.grid(row = 2, column = 3)
 manual_tilt_btn = tk.Button(manual_tp_label_frame, text= 'Send', command = handler_tp_head_tilt)
-manual_tilt_btn.grid(row = 2, column = 2)
-manual_tilt_btn_step_pos = tk.Button(manual_tp_label_frame, text= '+', command = handler_tp_head_tilt_step)
-manual_tilt_btn_step_pos.grid(row = 2, column = 3)
-manual_tilt_btn_step_neg = tk.Button(manual_tp_label_frame, text= '-', command = handler_tp_head_tilt_step)
-manual_tilt_btn_step_neg.grid(row = 2, column = 4)
+manual_tilt_btn.grid(row = 1, column = 2)
+
+manual_tilt_step_entry_txt = tk.StringVar()
+manual_tilt_step_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_tilt_step_entry_txt)
+manual_tilt_step_txt.grid(row = 1, column = 3, padx=(10,10))
+manual_tilt_step_entry_txt.set("0")
+
+manual_tilt_btn_step_pos = tk.Button(manual_tp_label_frame, text= '+', command = handler_tp_head_tilt_step_pos)
+manual_tilt_btn_step_pos.grid(row = 1, column = 4)
+manual_tilt_btn_step_neg = tk.Button(manual_tp_label_frame, text= '-', command = handler_tp_head_tilt_step_neg)
+manual_tilt_btn_step_neg.grid(row = 1, column = 5)
+
+manual_pan_lbl = tk.Label(manual_tp_label_frame, text = "Pan Angle (-90 to 90deg):")
+manual_pan_lbl.grid(row = 2, column = 0)
+pan_entry_txt = tk.StringVar()
+manual_pan_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=pan_entry_txt)
+pan_entry_txt.set("0")
+manual_pan_txt.grid(row = 2, column = 1, padx=(10,10))
+manual_pan_btn = tk.Button(manual_tp_label_frame, text= 'Send', command = handler_tp_head_pan)
+manual_pan_btn.grid(row = 2, column = 2)
+# manual_pan_confm_lbl = tk.Label(manual_tp_label_frame, text = "")
+# manual_pan_confm_lbl.grid(row = 1, column = 3)
+
+manual_pan_step_entry_txt = tk.StringVar()
+manual_pan_step_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_pan_step_entry_txt)
+manual_pan_step_txt.grid(row = 2, column = 3, padx=(10,10))
+manual_pan_step_entry_txt.set("0")
+
+manual_pan_btn_step_pos = tk.Button(manual_tp_label_frame, text= '+', command = handler_tp_head_pan_step_pos)
+manual_pan_btn_step_pos.grid(row = 2, column = 4)
+manual_pan_btn_step_neg = tk.Button(manual_tp_label_frame, text= '-', command = handler_tp_head_pan_step_neg)
+manual_pan_btn_step_neg.grid(row = 2, column = 5)
 
 manual_tp_reset_btn = tk.Button(manual_tp_label_frame, text= 'Reset', bg="red", command = handler_tp_head_resets)
 manual_tp_reset_btn.grid(row = 3, column = 2)
@@ -548,19 +609,19 @@ manual_tp_reset_btn.grid(row = 3, column = 2)
 manual_home_label_frame =  ttk.LabelFrame(CalibTab, text = 'Home')
 manual_home_label_frame.pack(fill = tk.BOTH, expand=True, side = 'bottom')
 
-manual_home_set_btn = tk.Button(manual_home_label_frame, text= 'Set', command = handler_home_set)
+manual_home_set_btn = tk.Button(manual_home_label_frame, width = 10, text= 'Set', command = handler_home_set)
 manual_home_set_btn.grid(row = 0, column = 1)
 
-manual_go_home_x_btn = tk.Button(manual_home_label_frame, text= 'Go X Home', command = handler_go_home_x)
+manual_go_home_x_btn = tk.Button(manual_home_label_frame, width = 10, text= 'Go X Home', command = handler_go_home_x)
 manual_go_home_x_btn.grid(row = 1, column = 0)
 
-manual_go_home_y_btn = tk.Button(manual_home_label_frame, text= 'Go Y Home', command = handler_go_home_y)
+manual_go_home_y_btn = tk.Button(manual_home_label_frame, width = 10, text= 'Go Y Home', command = handler_go_home_y)
 manual_go_home_y_btn.grid(row = 1, column = 1)
 
-manual_go_home_z_btn = tk.Button(manual_home_label_frame, text= 'Go Z Home', command = handler_go_home_z)
+manual_go_home_z_btn = tk.Button(manual_home_label_frame, width = 10, text= 'Go Z Home', command = handler_go_home_z)
 manual_go_home_z_btn.grid(row = 1, column = 2)
 
-manual_go_home_xyz_btn = tk.Button(manual_home_label_frame, text= 'Go XYZ Home', command = handler_go_home_xyz)
+manual_go_home_xyz_btn = tk.Button(manual_home_label_frame, width = 10, text= 'Go XYZ Home', command = handler_go_home_xyz)
 manual_go_home_xyz_btn.grid(row = 2, column = 1)
 
 #-------------------------- MPFCS Manual XYZ Set
@@ -609,53 +670,73 @@ manual_x_lbl.grid(row = 0, column = 0)
 manual_x_entry_txt = tk.StringVar()
 manual_x_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_x_entry_txt)
 manual_x_entry_txt.set("?")
-manual_x_txt.grid(row = 0, column = 1)
+manual_x_txt.grid(row = 0, column = 1, padx=(10,10))
 manual_x_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
 manual_x_btn.grid(row = 0, column = 2)
 
+manual_x_step_entry_txt = tk.StringVar()
+manual_x_step_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_x_step_entry_txt)
+manual_x_step_txt.grid(row = 0, column = 3, padx=(10,10))
+manual_x_step_entry_txt.set("0")
+
 manual_x_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_pos_x)
-manual_x_step_pos_btn.grid(row = 0, column = 3)
+manual_x_step_pos_btn.grid(row = 0, column = 4)
 manual_x_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_neg_x)
-manual_x_step_neg_btn.grid(row = 0, column = 4)
+manual_x_step_neg_btn.grid(row = 0, column = 5)
 
 manual_y_lbl = tk.Label(manual_xyz_label_frame, text = "Y Location (mm):")
 manual_y_lbl.grid(row = 1, column = 0)
 manual_y_entry_txt = tk.StringVar()
 manual_y_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_y_entry_txt)
 manual_y_entry_txt.set("?")
-manual_y_txt.grid(row = 1, column = 1)
+manual_y_txt.grid(row = 1, column = 1, padx=(10,10))
 manual_y_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
 manual_y_btn.grid(row = 1, column = 2)
+
+manual_y_step_entry_txt = tk.StringVar()
+manual_y_step_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_y_step_entry_txt)
+manual_y_step_txt.grid(row = 1, column = 3, padx=(10,10))
+manual_y_step_entry_txt.set("0")
+
 manual_y_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_pos_y)
-manual_y_step_pos_btn.grid(row = 1, column = 3)
+manual_y_step_pos_btn.grid(row = 1, column = 4)
 manual_y_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_neg_y)
-manual_y_step_neg_btn.grid(row = 1, column = 4)
+manual_y_step_neg_btn.grid(row = 1, column = 5)
 
 manual_z_lbl = tk.Label(manual_xyz_label_frame, text = "Z Location (mm):")
 manual_z_lbl.grid(row = 2, column = 0)
 manual_z_entry_txt = tk.StringVar()
 manual_z_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_z_entry_txt)
 manual_z_entry_txt.set("?")
-manual_z_txt.grid(row = 2, column = 1)
+manual_z_txt.grid(row = 2, column = 1, padx=(10,10))
 manual_z_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
 manual_z_btn.grid(row = 2, column = 2)
+
+manual_z_step_entry_txt = tk.StringVar()
+manual_z_step_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_z_step_entry_txt)
+manual_z_step_txt.grid(row = 2, column = 3, padx=(10,10))
+manual_z_step_entry_txt.set("0")
+
 manual_z_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_pos_z)
-manual_z_step_pos_btn.grid(row = 2, column = 3)
+manual_z_step_pos_btn.grid(row = 2, column = 4)
 manual_z_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_neg_z)
-manual_z_step_neg_btn.grid(row = 2, column = 4)
+manual_z_step_neg_btn.grid(row = 2, column = 5)
 
 manual_speed_lbl = tk.Label(manual_xyz_label_frame, text = "Speed (mm/s???):")
 manual_speed_lbl.grid(row = 3, column = 0)
 manual_speed_entry_txt = tk.StringVar()
 manual_speed_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_speed_entry_txt)
 manual_speed_entry_txt.set("600")
-manual_speed_txt = tk.Entry(manual_xyz_label_frame, width = 10)
 manual_speed_txt.grid(row = 3, column = 1)
 manual_speed_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
 manual_speed_btn.grid(row = 3, column = 2)
 
 manual_reset_btn = tk.Button(manual_xyz_label_frame, text= 'Reset', bg="red", command = handler_manual_reset)
 manual_reset_btn.grid(row = 4, column = 0)
+
+manual_stop_btn = tk.Button(manual_xyz_label_frame, text= 'Stop', command = handler_mpfcs_stop, bg="red", fg="black", font = 'Helvetica 18 bold')
+manual_stop_btn.grid(row = 4, column = 1, padx = 10, pady = 5)
+manual_stop_btn.configure(state = 'normal')
 
 ##################################### MPFCS Tab
 
@@ -670,21 +751,17 @@ tp_label_frame.pack(fill=tk.BOTH, expand=True, side = 'left')
 
 tilt_lbl = tk.Label(tp_label_frame, text = "Tilt Angle (-90 to 90deg):")
 tilt_lbl.grid(row = 1, column = 0)
-tilt_entry_txt = tk.StringVar()
 tilt_txt = tk.Entry(tp_label_frame, width = 10, textvariable=tilt_entry_txt)
-tilt_entry_txt.set("0")
 tilt_txt.grid(row = 1, column = 1)
-tilt_confm_lbl = tk.Label(tp_label_frame, text = "")
-tilt_confm_lbl.grid(row = 1, column = 3)
+# tilt_confm_lbl = tk.Label(tp_label_frame, text = "")
+# tilt_confm_lbl.grid(row = 1, column = 3)
 
 pan_lbl = tk.Label(tp_label_frame, text = "Pan Servo Angle (0-180):")
 pan_lbl.grid(row = 2, column = 0)
-pan_entry_txt = tk.StringVar()
 pan_txt = tk.Entry(tp_label_frame, width = 10, textvariable=pan_entry_txt)
-pan_entry_txt.set("0")
 pan_txt.grid(row = 2, column = 1)
-pan_confm_lbl = tk.Label(tp_label_frame, text = "")
-pan_confm_lbl.grid(row = 2, column = 3)
+# pan_confm_lbl = tk.Label(tp_label_frame, text = "")
+# pan_confm_lbl.grid(row = 2, column = 3)
 
 # tk.Button layouts
 tilt_btn1 = tk.Button(tp_label_frame, text= 'Send', command = handler_tp_head_tilt)
