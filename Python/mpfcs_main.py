@@ -23,6 +23,15 @@ from Backend.mpfcs_mpcnc import mpcnc_move_xyz, mpcnc_pause, mpcnc_home_xyz, mpc
 
 emergency_stop_triggered = False
 
+a4982_steps_per_rev = 200.0;
+a4982_u_steps_per_step = 16.0;
+a4982_gear_teeth = 16.0;
+belt_teeth_per_mm = 1.0/2.0; # Approximated, due to stretch of band
+leadscrew_pitch = 1.4111 # ??? 2 mm/revolution = T8
+
+XY_MM_PER_STEP = 1.0/(a4982_steps_per_rev*a4982_u_steps_per_step*belt_teeth_per_mm/a4982_gear_teeth)
+Z_MM_PER_STEP = 1.0/(a4982_steps_per_rev*a4982_u_steps_per_step/leadscrew_pitch)
+
 if DEBUG == False:
 #     Initializing communication 
     rm = visa.ResourceManager()
@@ -39,7 +48,7 @@ def handler_tp_head_tilt():
     
 def handler_tp_head_tilt_step_pos():
     if tilt_entry_txt.get() == '0':
-        manual_tilt_step = float(1)
+        manual_tilt_step = tp_usecs_2_deg(1)
     else:
         manual_tilt_step = float(tilt_entry_txt.get())
         
@@ -48,7 +57,7 @@ def handler_tp_head_tilt_step_pos():
     
 def handler_tp_head_tilt_step_neg():
     if tilt_entry_txt.get() == '0':
-        manual_tilt_step = -float(1)
+        manual_tilt_step = -tp_usecs_2_deg(1)
     else:
         manual_tilt_step = -float(tilt_entry_txt.get())
         
@@ -60,7 +69,7 @@ def handler_tp_head_pan():
     
 def handler_tp_head_pan_step_pos():
     if pan_entry_txt.get() == '0':
-        manual_pan_step = float(1)
+        manual_pan_step = tp_usecs_2_deg(1)
     else:
         manual_pan_step = float(pan_entry_txt.get())
         
@@ -69,7 +78,7 @@ def handler_tp_head_pan_step_pos():
     
 def handler_tp_head_pan_step_neg():
     if pan_entry_txt.get() == '0':
-        manual_pan_step = -float(1)
+        manual_pan_step = -tp_usecs_2_deg(1)
     else:
         manual_pan_step = -float(pan_entry_txt.get())
         
@@ -95,7 +104,7 @@ def handler_mpfcs_stop():
     
 def handler_manual_step_pos_x():
     if manual_x_step_entry_txt.get() == '0':
-        manual_x_step = float(1)
+        manual_x_step = XY_MM_PER_STEP
     else:
         manual_x_step = float(manual_x_step_entry_txt.get())
         
@@ -105,7 +114,7 @@ def handler_manual_step_pos_x():
     
 def handler_manual_step_neg_x():
     if manual_x_step_entry_txt.get() == '0':
-        manual_x_step = float(-1)
+        manual_x_step = -XY_MM_PER_STEP
     else:
         manual_x_step = -float(manual_x_step_entry_txt.get())
         
@@ -115,7 +124,7 @@ def handler_manual_step_neg_x():
     
 def handler_manual_step_pos_y():
     if manual_y_step_entry_txt.get() == '0':
-        manual_y_step = float(1)
+        manual_y_step = XY_MM_PER_STEP
     else:
         manual_y_step = float(manual_y_step_entry_txt.get())
         
@@ -125,7 +134,7 @@ def handler_manual_step_pos_y():
     
 def handler_manual_step_neg_y():
     if manual_y_step_entry_txt.get() == '0':
-        manual_y_step = float(-1)
+        manual_y_step = -XY_MM_PER_STEP
     else:
         manual_y_step = -float(manual_y_step_entry_txt.get())
         
@@ -135,7 +144,7 @@ def handler_manual_step_neg_y():
 
 def handler_manual_step_pos_z():
     if manual_z_step_entry_txt.get() == '0':
-        manual_z_step = float(1)
+        manual_z_step = Z_MM_PER_STEP
     else:
         manual_z_step = float(manual_z_step_entry_txt.get())
         
@@ -145,7 +154,7 @@ def handler_manual_step_pos_z():
     
 def handler_manual_step_neg_z():
     if manual_z_step_entry_txt.get() == '0':
-        manual_z_step = float(-1)
+        manual_z_step = -Z_MM_PER_STEP
     else:
         manual_z_step = -float(manual_z_step_entry_txt.get())
         

@@ -163,9 +163,9 @@ def tp_deg_2_usecs(deg_p_m_90, servo_model):
     else:
         servo_input_usec = pwm_range_min + np.around(deg_180/deg_per_usec)
         
-    return servo_input_usec
+    return int(servo_input_usec)
         
-def tp_deg_2_usecs(servo_input_usec, servo_model):
+def tp_usecs_2_deg(servo_input_usec, servo_model):
     pwm_range_min, deg_per_usec, _ = tp_servo_specs(servo_model)
     
     if servo_input_usec == 1:
@@ -174,6 +174,6 @@ def tp_deg_2_usecs(servo_input_usec, servo_model):
         deg_180 = (deg_per_usec-pwm_range_min)*deg_per_usec
     
     deg_p_m_90 = deg_180-90
-    return deg_p_m_90
+    return float(deg_p_m_90)
 # def tp_home_set(ser_rambo):
     
