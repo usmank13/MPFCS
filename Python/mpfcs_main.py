@@ -5,7 +5,7 @@ create 3D graphs of electromagnetic fields for wireless power systems.
 @authors: usmank13, chasewhyte, Tri Nguyen
 
 """
-DEBUG = False
+DEBUG = True
 TILT_SERVO = "HS-53"
 PAN_SERVO = "HS-5055MG-R"
 
@@ -213,7 +213,7 @@ def handler_go_home_z():
 def handler_go_home_xyz():
     mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
 
-def handler_home_set():
+def handler_set_relative_home():
     mpcnc_home_xyz('set', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)    
         
 def handler_submit_values():
@@ -628,8 +628,8 @@ gcode_btn.grid(row = 4, column = 2)
 manual_home_label_frame =  ttk.LabelFrame(CalibTab, text = 'Home')
 manual_home_label_frame.pack(fill = tk.BOTH, expand=True, side = 'bottom')
 
-manual_home_set_btn = tk.Button(manual_home_label_frame, width = 10, text= 'Set', command = handler_home_set)
-manual_home_set_btn.grid(row = 0, column = 1)
+manual_set_relative_home_btn = tk.Button(manual_home_label_frame, width = 10, text= 'Set Relative Home', command = handler_set_relative_home)
+manual_set_relative_home_btn.grid(row = 0, column = 1)
 
 manual_go_home_x_btn = tk.Button(manual_home_label_frame, width = 10, text= 'Go X Home', command = handler_go_home_x)
 manual_go_home_x_btn.grid(row = 1, column = 0)
@@ -893,8 +893,8 @@ submit_val.grid(row = 14, column = 0, padx = 5, pady = 5)
 reset_VNA = tk.Button(mpfcs_setup_frame, text = 'Reset Inputs', command = handler_vna_reset, state = 'disabled', font = 'Helvetica 10 bold')
 reset_VNA.grid(row = 14, column = 1, padx = 5, pady = 5)
 
-home_set_btn = tk.Button(mpfcs_setup_frame, text= 'Set XYZ Home', command = handler_home_set)
-home_set_btn.grid(row = 15, column = 0)
+set_relative_home_btn = tk.Button(mpfcs_setup_frame, text= 'Set Relative Home', command = handler_set_relative_home)
+set_relative_home_btn.grid(row = 15, column = 0)
 
 go_home_xyz_btn = tk.Button(mpfcs_setup_frame, text= 'Go XYZ Home', command = handler_go_home_xyz)
 go_home_xyz_btn.grid(row = 15, column = 1)

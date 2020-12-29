@@ -20,16 +20,21 @@ import time
     communication (see pyserial)
 """
 def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, ser_rambo):
-        
-    ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X" + x_entry_txt.get() +\
-                     " Y" + y_entry_txt.get() + " Z" + z_entry_txt.get()).encode() + b'\n')
+    x_loc_write = str(float(x_entry_txt.get())+ mpcnc_move_xyz.x_offset)
+    y_loc_write = str(float(y_entry_txt.get())+ mpcnc_move_xyz.y_offset)
+    z_loc_write = str(float(z_entry_txt.get())+ mpcnc_move_xyz.z_offset)
+    ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X" + x_loc_write +\
+                     " Y" + y_loc_write + " Z" + z_loc_write).encode() + b'\n')
 #     time.sleep(10)
     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
     
-    x_loc, y_loc, z_loc = mpcnc_pos_read(ser_rambo)
-    x_entry_txt.set(x_loc)
-    y_entry_txt.set(y_loc)
-    z_entry_txt.set(z_loc)
+    x_loc_read, y_loc_read, z_loc_read = mpcnc_pos_read(ser_rambo)
+    mpcnc_move_xyz.x_loc = float(x_loc_read)
+    mpcnc_move_xyz.y_loc = float(y_loc_read)
+    mpcnc_move_xyz.z_loc = float(z_loc_read)
+    x_entry_txt.set(mpcnc_move_xyz.x_loc-mpcnc_move_xyz.x_offset)
+    y_entry_txt.set(mpcnc_move_xyz.y_loc-mpcnc_move_xyz.y_offset)
+    x_entry_txt.set(mpcnc_move_xyz.z_loc-mpcnc_move_xyz.z_offset)
     print("[X, Y, Z] = [{},{},{}]".format(x_entry_txt.get(), y_entry_txt.get(), z_entry_txt.get()))
 
 
@@ -46,32 +51,42 @@ def mpcnc_pause(PauseDur, ser_rambo):
 def mpcnc_home_xyz(home_sel, speed, x_entry_txt, y_entry_txt, z_entry_txt, ser_rambo):
     if home_sel == 'xyz':
         ser_rambo.write(("G28").encode() + b'\n')
-        mpcnc_move_xyz.x_loc = float(0)
-        mpcnc_move_xyz.y_loc = float(0)
-        mpcnc_move_xyz.z_loc = float(0)
         x_loc, y_loc, z_loc = mpcnc_pos_read(ser_rambo)
         x_entry_txt.set(x_loc)
         y_entry_txt.set(y_loc)
         z_entry_txt.set(z_loc)
+        mpcnc_move_xyz.x_loc = float(x_loc)
+        mpcnc_move_xyz.y_loc = float(y_loc)
+        mpcnc_move_xyz.z_loc = float(z_loc) 
+        mpcnc_move_xyz.x_offset = 0.0
+        mpcnc_move_xyz.y_offset = 0.0
+        mpcnc_move_xyz.z_offset = 0.0
         
     elif home_sel == 'x':
         ser_rambo.write(("G28 X").encode() + b'\n')
-        mpcnc_move_xyz.x_loc = float(0)
         x_loc, _, _ = mpcnc_pos_read(ser_rambo)
         x_entry_txt.set(x_loc)
-        
+        mpcnc_move_xyz.x_loc = float(x_loc)
+        mpcnc_move_xyz.x_offset = 0.0
     elif home_sel == 'y':
         ser_rambo.write(("G28 Y").encode() + b'\n')
-        mpcnc_move_xyz.y_loc = float(0)
         _, y_loc, _ = mpcnc_pos_read(ser_rambo)
         y_entry_txt.set(y_loc)
+        mpcnc_move_xyz.y_loc = float(y_loc)
+        mpcnc_move_xyz.y_offset = 0.0
     elif home_sel == 'z':
         ser_rambo.write(("G28 Z").encode() + b'\n')
-        mpcnc_move_xyz.z_loc = float(0)
         _, _, z_loc = mpcnc_pos_read(ser_rambo)
         z_entry_txt.set(z_loc)
+        mpcnc_move_xyz.z_loc = float(z_loc)
+        mpcnc_move_xyz.z_offset = 0.0
     else:
-        ser_rambo.write(("G92 X0 Y0 Z0").encode() + b'\n')
+        mpcnc_move_xyz.x_offset = float(x_entry_txt.get())
+        mpcnc_move_xyz.y_offset = float(y_entry_txt.get())
+        mpcnc_move_xyz.z_offset = float(z_entry_txt.get())
+        x_entry_txt.set(str(0.0))
+        y_entry_txt.set(str(0.0))
+        z_entry_txt.set(str(0.0))        
     
     print("[X, Y, Z] = [{},{},{}]".format(x_entry_txt.get(), y_entry_txt.get(), z_entry_txt.get()))
 
