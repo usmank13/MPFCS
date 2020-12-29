@@ -5,7 +5,9 @@ create 3D graphs of electromagnetic fields for wireless power systems.
 @authors: usmank13, chasewhyte, Tri Nguyen
 
 """
-DEBUG = True
+DEBUG = False
+TILT_SERVO = "HS-53"
+PAN_SERVO = "HS-5055MG-R"
 
 import numpy as np
 import serial
@@ -18,8 +20,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from Frontend.mpfcs_gui_button_functions import submit_values, vna_buttons_reset
 from Backend.mpfcs_vna import vna_init, vna_record#, vna_q_calc
-from Backend.mpfcs_tp_head import tp_head_tilt, tp_head_pan, tp_head_resets
-from Backend.mpfcs_mpcnc import mpcnc_move_xyz, mpcnc_pause, mpcnc_home_xyz, mpcnc_pos_read
+from Backend.mpfcs_tp_head import tp_head_tilt, tp_head_pan, tp_head_resets, tp_usecs_2_deg
+from Backend.mpfcs_mpcnc import mpcnc_move_xyz, mpcnc_pause, mpcnc_home_xyz, mpcnc_pos_read, marlin_readline_startup
 
 emergency_stop_triggered = False
 
@@ -27,7 +29,7 @@ a4982_steps_per_rev = 200.0;
 a4982_u_steps_per_step = 16.0;
 a4982_gear_teeth = 16.0;
 belt_teeth_per_mm = 1.0/2.0; # Approximated, due to stretch of band
-leadscrew_pitch = 1.4111 # ??? 2 mm/revolution = T8
+leadscrew_pitch = 4*2 #1.4111 # ??? 2 mm/revolution = T8
 
 XY_MM_PER_STEP = 1.0/(a4982_steps_per_rev*a4982_u_steps_per_step*belt_teeth_per_mm/a4982_gear_teeth)
 Z_MM_PER_STEP = 1.0/(a4982_steps_per_rev*a4982_u_steps_per_step/leadscrew_pitch)
@@ -37,27 +39,30 @@ if DEBUG == False:
     rm = visa.ResourceManager()
     visa_vna = rm.open_resource('GPIB0::16')
     print("VNA: {}".format(visa_vna.query('*IDN?')))
-    ser_rambo = serial.Serial('COM6') # name of port, this might be different because of the hub we use
-    ser_rambo.baudrate = 250000
+    ser_rambo = serial.Serial('COM6', 250000, timeout=1.0) # name of port, this might be different because of the hub we use
+#     ser_rambo.baudrate = 250000
     print("RAMBo Controller for MPCNC: {}".format(ser_rambo.name))
-    print("10sec Delay for Boot-up...")
+    print("\n10sec Delay for Marlin Boot-up...")
     time.sleep(10)
+    marlin_readline_startup(ser_rambo)
+
 
 def handler_tp_head_tilt():
     tp_head_tilt(tilt_entry_txt, ser_rambo)
     
 def handler_tp_head_tilt_step_pos():
-    if tilt_entry_txt.get() == '0':
-        manual_tilt_step = tp_usecs_2_deg(1)
+    if manual_tilt_step_entry_txt.get() == '0':
+        manual_tilt_step = tp_usecs_2_deg(1, TILT_SERVO)
     else:
         manual_tilt_step = float(tilt_entry_txt.get())
-        
+    
+#     print("{}, {}, {}".format(manual_tilt_step, float(tilt_entry_txt.get()), float(tilt_entry_txt.get()) + manual_tilt_step))
     tilt_entry_txt.set(str(float(tilt_entry_txt.get()) + manual_tilt_step))
     tp_head_tilt(tilt_entry_txt, ser_rambo)
     
 def handler_tp_head_tilt_step_neg():
-    if tilt_entry_txt.get() == '0':
-        manual_tilt_step = -tp_usecs_2_deg(1)
+    if manual_tilt_step_entry_txt.get() == '0':
+        manual_tilt_step = -tp_usecs_2_deg(1, TILT_SERVO)
     else:
         manual_tilt_step = -float(tilt_entry_txt.get())
         
@@ -68,8 +73,8 @@ def handler_tp_head_pan():
     tp_head_pan(pan_entry_txt, ser_rambo)
     
 def handler_tp_head_pan_step_pos():
-    if pan_entry_txt.get() == '0':
-        manual_pan_step = tp_usecs_2_deg(1)
+    if manual_pan_step_entry_txt.get() == '0':
+        manual_pan_step = tp_usecs_2_deg(1, PAN_SERVO)
     else:
         manual_pan_step = float(pan_entry_txt.get())
         
@@ -77,8 +82,8 @@ def handler_tp_head_pan_step_pos():
     tp_head_pan(pan_entry_txt, ser_rambo)
     
 def handler_tp_head_pan_step_neg():
-    if pan_entry_txt.get() == '0':
-        manual_pan_step = -tp_usecs_2_deg(1)
+    if manual_pan_step_entry_txt.get() == '0':
+        manual_pan_step = -tp_usecs_2_deg(1, PAN_SERVO)
     else:
         manual_pan_step = -float(pan_entry_txt.get())
         
@@ -87,6 +92,14 @@ def handler_tp_head_pan_step_neg():
 
 def handler_tp_head_resets():
     tp_head_resets(tp_reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo)
+    
+def handler_gcode():
+    cmd = gcode_entry_txt.get()
+    ser_rambo.write(cmd.encode()+b'\n')
+    marlin_output = ser_rambo.readline()
+    while marlin_output:
+        print(marlin_output)
+        marlin_output = ser_rambo.readline()
     
 # def handler_tp_home_set():
 #     tp_home_xyz('set', ser_rambo)
@@ -99,8 +112,7 @@ def handler_mpfcs_run():
               filename_entry_txt, mpfcs_setup_frame)
 
 def handler_mpfcs_stop():
-    ser_rambo.write(("M0").encode())
-    ser_rambo.write(b'\n') 
+    ser_rambo.write(("M0").encode()+b'\n')
     
 def handler_manual_step_pos_x():
     if manual_x_step_entry_txt.get() == '0':
@@ -381,29 +393,21 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     for tilt_deg in deg_range:
 #                     print("Pos Tilt3 Deg = {}".format(tilt_deg))
 #                     print("Pos Pan Deg = {}".format(tilt_deg))
-        ser_rambo.write(("M280"+" P0"+" S"+str(tilt_deg)).encode()) # Roll serial write
-        ser_rambo.write(b'\n') 
-        ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
-        ser_rambo.write(b'\n')
+        ser_rambo.write(("M280"+" P0"+" S"+str(tilt_deg)).encode()+b'\n') # Roll serial write
+        ser_rambo.write(("M400").encode()+b'\n') # Wait for "Movement Complete" response
         time.sleep(0.2)
-        ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()) # Roll serial write
-        ser_rambo.write(b'\n') 
-        ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
-        ser_rambo.write(b'\n')
+        ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()+b'\n') # Roll serial write
+        ser_rambo.write(("M400").encode()+b'\n') # Wait for "Movement Complete" response
         time.sleep(0.2)
              
     for tilt_deg in reversed(deg_range):
 #                     print("Neg Pan Deg = {}".format(tilt_deg))
-        ser_rambo.write(("M280"+" P0"+" S"+str(tilt_deg)).encode()) # Roll serial write
-        ser_rambo.write(b'\n')
-        ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
-        ser_rambo.write(b'\n')
+        ser_rambo.write(("M280"+" P0"+" S"+str(tilt_deg)).encode()+b'\n') # Roll serial write
+        ser_rambo.write(("M400").encode()+b'\n') # Wait for "Movement Complete" response
         time.sleep(0.5)
 #                     print("Neg Tilt3 Deg = {}".format(tilt_deg))                    
-        ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()) # Roll serial write
-        ser_rambo.write(b'\n') 
-        ser_rambo.write(("M400").encode()) # Wait for "Movement Complete" response
-        ser_rambo.write(b'\n')
+        ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()+b'\n') # Roll serial write
+        ser_rambo.write(("M400").encode()+b'\n') # Wait for "Movement Complete" response
         time.sleep(0.5)
         
     for z_coord in sampling_z_coordinates: # for each z plane 
@@ -574,8 +578,6 @@ tilt_entry_txt = tk.StringVar()
 manual_tilt_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=tilt_entry_txt)
 tilt_entry_txt.set("0")
 manual_tilt_txt.grid(row = 1, column = 1, padx=(10,10))
-# manual_tilt_confm_lbl = tk.Label(manual_tp_label_frame, text = "")
-# manual_tilt_confm_lbl.grid(row = 2, column = 3)
 manual_tilt_btn = tk.Button(manual_tp_label_frame, text= 'Send', command = handler_tp_head_tilt)
 manual_tilt_btn.grid(row = 1, column = 2)
 
@@ -613,6 +615,14 @@ manual_pan_btn_step_neg.grid(row = 2, column = 5)
 manual_tp_reset_btn = tk.Button(manual_tp_label_frame, text= 'Reset', bg="red", command = handler_tp_head_resets)
 manual_tp_reset_btn.grid(row = 3, column = 2)
 
+manual_gcode_lbl = tk.Label(manual_tp_label_frame, text = "GCode:")
+manual_gcode_lbl.grid(row = 4, column = 0)
+gcode_entry_txt = tk.StringVar()
+gcode_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=gcode_entry_txt)
+pan_entry_txt.set("")
+gcode_txt.grid(row = 4, column = 1, padx=(10,10))
+gcode_btn = tk.Button(manual_tp_label_frame, text= 'Send', command = handler_gcode)
+gcode_btn.grid(row = 4, column = 2)
 #-------------------------- MPFCS Manual XYZ Step
 
 manual_home_label_frame =  ttk.LabelFrame(CalibTab, text = 'Home')
@@ -946,6 +956,7 @@ if DEBUG == False:
     tilt_entry_txt.set("0")
     pan_entry_txt.set("0")
     tp_head_resets(tp_reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo)
+    mpcnc_pos_read.m114_output_static = ""
 #     mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
 
 ######################### end of code
