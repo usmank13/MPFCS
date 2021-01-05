@@ -1,6 +1,6 @@
 """
-@ file VNAFunctions.py
-@brief Executes the overall system behavior: probe movement and VNA measurements
+@ file mpfcs_vna.py
+@brief Defines functions for interfacing with the Vector Network Analyzer and recording data
 
 @author: usmank13, chasewhyte
 """
@@ -19,7 +19,8 @@ def vna_init(num_points, visa_vna, centerF, span): # add some more calibration f
     visa_vna.write('CWFREQ' + str(centerF) + 'MHZ')
     # visa_vna.write('STAR' + str(float(centerF-span/2)) + 'MHZ')
     # visa_vna.write('STOP' + str(float(centerF+span/2)) + 'MHZ')
-    visa_vna.write('SPAN' + str(2.0)+'MHZ') 
+    visa_vna.write('HOLD;LINFREQ;SWET1.000000E-1S;STAR' + str(F_start) + 'MHZ;STOP' + str(F_stop) + 'MHZ;CONT;') 
+    visa_vna.query('SPAN?')
     # visa_vna.query('CWFFREQ?')
     #visa_vna.write('POWE' + str(power_level) + 'DB')
     # calibration procedures? We added extra cable 
@@ -35,7 +36,7 @@ def vna_init(num_points, visa_vna, centerF, span): # add some more calibration f
 @param[out] data_arr: Returns the S Parameter data
 """
 def vna_record(num_points, sParam, visa_vna):  # step length is passed to find the correct element
-    visa_vna.write(sParam)
+    visa_vna.write(sParam +';')
     visa_vna.write('mark1')
     visa_vna.write('markbuck' + str(int((num_points-1) / 2))) # selects the point at the center frequency. 
         # Perhaps I should let the user select which frequency they want to check 
@@ -53,7 +54,8 @@ def vna_record(num_points, sParam, visa_vna):  # step length is passed to find t
 #     print("Outpform = {}".format(data3))
     data4 = visa_vna.query('outpforf')
 #     print("{} - Outpforf = {}".format(sParam, data4))
-    return data_arr[0]
+#   return data_arr[0]
+    return data4 # might return another val as well for the center freq
 
 
 """
