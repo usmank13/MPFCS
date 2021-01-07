@@ -201,6 +201,71 @@ def handler_manual_reset():
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
+def handler_manual_circle_init():
+    handler_manual_circle_xy.angles = np.linspace(0, 360, manual_circle_steps_entry_txt.get())
+    handler_manual_circle_xy.step = 0
+    handler_manual_circle_xz.angles = np.linspace(0, 360, manual_circle_steps_entry_txt.get())
+    handler_manual_circle_xz.step = 0
+    handler_manual_circle_yz.angles = np.linspace(0, 360, manual_circle_steps_entry_txt.get())
+    handler_manual_circle_yz.step = 0
+    
+def handler_manual_circle_xy():
+    manual_x_entry_txt.set(str(0))
+    manual_y_entry_txt.set(str(0))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+           manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+    angle = handler_manual_circle_xy.angles(handler_manual_circle_xy.step)
+    radius = float(manual_radius_entry_txt.get())    
+    radian = angle*(2*np.pi/360)
+    x_pos = radius*np.cos(radian)
+    y_pos = radius*np.sin(radian)
+    manual_x_entry_txt.set(str(x_pos))
+    manual_y_entry_txt.set(str(y_pos))
+    print("Circle Target X,Y:{},{}".format(manual_x_entry_txt.get(), manual_y_entry_txt.get()))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+#         time.sleep(30)
+    print("Circle Result X,Y:{},{}".format(manual_x_entry_txt.get(), manual_y_entry_txt.get()))
+    handler_manual_circle_xy.step += 1
+    
+def handler_manual_circle_xz():
+    manual_x_entry_txt.set(str(0))
+    manual_z_entry_txt.set(str(0))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+           manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+    angle = handler_manual_circle_xz.angles(handler_manual_circle_xz.step)
+    radius = float(manual_radius_entry_txt.get())    
+    radian = angle*(2*np.pi/360)
+    x_pos = radius*np.cos(radian)
+    z_pos = radius*np.sin(radian)
+    manual_x_entry_txt.set(str(x_pos))
+    manual_z_entry_txt.set(str(z_pos))
+    print("Circle Target X,Z:{},{}".format(manual_x_entry_txt.get(), manual_z_entry_txt.get()))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+#         time.sleep(30)
+    print("Circle Result X,Z:{},{}".format(manual_x_entry_txt.get(), manual_z_entry_txt.get()))
+    handler_manual_circle_xz.step += 1
+    
+def handler_manual_circle_yz():
+    manual_y_entry_txt.set(str(0))
+    manual_z_entry_txt.set(str(0))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+           manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+    angle = handler_manual_circle_xz.angles(handler_manual_circle_xz.step)
+    radius = float(manual_radius_entry_txt.get())    
+    radian = angle*(2*np.pi/360)
+    y_pos = radius*np.cos(radian)
+    z_pos = radius*np.sin(radian)
+    manual_y_entry_txt.set(str(y_pos))
+    manual_z_entry_txt.set(str(z_pos))
+    print("Circle Target X,Z:{},{}".format(manualy_entry_txt.get(), manual_z_entry_txt.get()))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+#         time.sleep(30)
+    print("Circle Result X,Z:{},{}".format(manual_y_entry_txt.get(), manual_z_entry_txt.get()))
+    handler_manual_circle_xz.step += 1
+    
 def handler_go_home_x():
     mpcnc_home_xyz('x', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
     
@@ -623,6 +688,30 @@ pan_entry_txt.set("")
 gcode_txt.grid(row = 4, column = 1, padx=(10,10))
 gcode_btn = tk.Button(manual_tp_label_frame, text= 'Send', command = handler_gcode)
 gcode_btn.grid(row = 4, column = 2)
+
+manual_circle_lbl = tk.Label(manual_tp_label_frame, text = "Circle Step")
+manual_circle_lbl.grid(row = 5, column = 0)
+
+manual_radius_lbl = tk.Label(manual_tp_label_frame, text = "Radius:")
+manual_radius_lbl.grid(row = 6, column = 0)
+manual_radius_entry_txt = tk.StringVar()
+manual_radius_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_radius_entry_txt)
+manual_radius_entry_txt.set("100")
+manual_radius_txt.grid(row = 6, column = 1, padx=(10,10))
+manual_circle_steps_entry_txt = tk.StringVar()
+manual_circle_steps_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_circle_steps_entry_txt)
+manual_circle_steps_entry_txt.set("20")
+manual_circle_steps_txt.grid(row = 6, column = 2, padx=(10,10))
+manual_circle_init_btn = tk.Button(manual_tp_label_frame, text= 'Init. Circle', command = handler_manual_circle_init)
+manual_circle_init_btn.grid(row = 6, column = 3)
+manual_circle_btn = tk.Button(manual_tp_label_frame, text= 'XY Step', command = handler_manual_circle_xy)
+manual_circle_btn.grid(row = 6, column = 4)
+manual_circle_btn = tk.Button(manual_tp_label_frame, text= 'XZ Step', command = handler_manual_circle_xz)
+manual_circle_btn.grid(row = 6, column = 5)
+manual_circle_btn = tk.Button(manual_tp_label_frame, text= 'YZ Step', command = handler_manual_circle_yz)
+manual_circle_btn.grid(row = 6, column = 6)
+
+
 #-------------------------- MPFCS Manual XYZ Step
 
 manual_home_label_frame =  ttk.LabelFrame(CalibTab, text = 'Home')
