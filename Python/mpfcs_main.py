@@ -5,7 +5,7 @@ create 3D graphs of electromagnetic fields for wireless power systems.
 @authors: usmank13, chasewhyte, Tri Nguyen
 
 """
-DEBUG = True
+DEBUG = False
 TILT_SERVO = "HS-53"
 PAN_SERVO = "HS-5055MG-R"
 
@@ -204,19 +204,27 @@ def handler_manual_reset():
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_manual_circle_init():
-    handler_manual_circle_xy.angles = np.linspace(0, 360, manual_circle_steps_entry_txt.get())
+    handler_manual_circle_xy.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get())+1)
     handler_manual_circle_xy.step = 0
-    handler_manual_circle_xz.angles = np.linspace(0, 360, manual_circle_steps_entry_txt.get())
+    handler_manual_circle_xy.x_entry_text = manual_x_entry_txt.get()
+    handler_manual_circle_xy.y_entry_text = manual_y_entry_txt.get()
+    handler_manual_circle_xz.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get()))
     handler_manual_circle_xz.step = 0
-    handler_manual_circle_yz.angles = np.linspace(0, 360, manual_circle_steps_entry_txt.get())
+    handler_manual_circle_xz.x_entry_text = manual_x_entry_txt.get()
+    handler_manual_circle_xz.z_entry_text = manual_z_entry_txt.get()
+    handler_manual_circle_yz.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get()))
     handler_manual_circle_yz.step = 0
+    handler_manual_circle_yz.y_entry_text = manual_y_entry_txt.get()
+    handler_manual_circle_yz.z_entry_text = manual_z_entry_txt.get()
     
 def handler_manual_circle_xy():
-    manual_x_entry_txt.set(str(0))
-    manual_y_entry_txt.set(str(0))
-    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-           manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
-    angle = handler_manual_circle_xy.angles(handler_manual_circle_xy.step)
+    if handler_manual_circle_xy.x_entry_text != manual_x_entry_txt.get()\
+        or handler_manual_circle_xy.y_entry_text != manual_y_entry_txt.get():
+        manual_x_entry_txt.set(handler_manual_circle_xy.x_entry_text)
+        manual_y_entry_txt.set(handler_manual_circle_xy.y_entry_text)
+        mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+    angle = handler_manual_circle_xy.angles[handler_manual_circle_xy.step]
     radius = float(manual_radius_entry_txt.get())    
     radian = angle*(2*np.pi/360)
     x_pos = radius*np.cos(radian)
@@ -231,10 +239,12 @@ def handler_manual_circle_xy():
     handler_manual_circle_xy.step += 1
     
 def handler_manual_circle_xz():
-    manual_x_entry_txt.set(str(0))
-    manual_z_entry_txt.set(str(0))
-    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-           manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+    if handler_manual_circle_xz.x_entry_text != manual_x_entry_txt.get()\
+        or handler_manual_circle_xz.z_entry_text != manual_z_entry_txt.get():
+        manual_x_entry_txt.set(handler_manual_circle_xz.x_entry_text)
+        manual_z_entry_txt.set(handler_manual_circle_xz.z_entry_text)
+        mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     angle = handler_manual_circle_xz.angles(handler_manual_circle_xz.step)
     radius = float(manual_radius_entry_txt.get())    
     radian = angle*(2*np.pi/360)
@@ -250,10 +260,12 @@ def handler_manual_circle_xz():
     handler_manual_circle_xz.step += 1
     
 def handler_manual_circle_yz():
-    manual_y_entry_txt.set(str(0))
-    manual_z_entry_txt.set(str(0))
-    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-           manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+    if handler_manual_circle_yz.y_entry_text != manual_y_entry_txt.get()\
+        or handler_manual_circle_yz.z_entry_text != manual_z_entry_txt.get():
+        manual_y_entry_txt.set(handler_manual_circle_yz.y_entry_text)
+        manual_z_entry_txt.set(handler_manual_circle_yz.z_entry_text)
+        mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     angle = handler_manual_circle_xz.angles(handler_manual_circle_xz.step)
     radius = float(manual_radius_entry_txt.get())    
     radian = angle*(2*np.pi/360)
@@ -669,7 +681,7 @@ manual_tp_label_frame =  ttk.LabelFrame(CalibTab, text = 'MPCNC Tilt/Pan')
 manual_tp_label_frame.pack(fill = tk.BOTH, expand=True, side = 'left')
 # Parameters.pack(fill=tk.BOTH, expand=True)
 
-manual_tilt_lbl = tk.Label(manual_tp_label_frame, text = "Tilt Angle (0 to 90deg):")
+manual_tilt_lbl = tk.Label(manual_tp_label_frame, text = "Tilt Angle (-30 to 90deg):")
 manual_tilt_lbl.grid(row = 1, column = 0)
 tilt_entry_txt = tk.StringVar()
 manual_tilt_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=tilt_entry_txt)
@@ -711,37 +723,40 @@ manual_pan_btn_step_neg.grid(row = 2, column = 5)
 
 manual_tp_reset_btn = tk.Button(manual_tp_label_frame, text= 'Reset', bg="red", command = handler_tp_head_resets)
 manual_tp_reset_btn.grid(row = 3, column = 2)
+tk.Label(manual_tp_label_frame, text = "").grid(row = 4, column = 0)
 
 manual_gcode_lbl = tk.Label(manual_tp_label_frame, text = "GCode:")
-manual_gcode_lbl.grid(row = 4, column = 0)
+manual_gcode_lbl.grid(row = 5, column = 0)
 gcode_entry_txt = tk.StringVar()
 gcode_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=gcode_entry_txt)
-pan_entry_txt.set("")
-gcode_txt.grid(row = 4, column = 1, padx=(10,10))
+gcode_txt.grid(row = 5, column = 1, padx=(10,10))
 gcode_btn = tk.Button(manual_tp_label_frame, text= 'Send', command = handler_gcode)
-gcode_btn.grid(row = 4, column = 2)
+gcode_btn.grid(row = 5, column = 2)
+tk.Label(manual_tp_label_frame, text = "").grid(row = 6, column = 0)
 
-manual_circle_lbl = tk.Label(manual_tp_label_frame, text = "Circle Step")
-manual_circle_lbl.grid(row = 5, column = 0)
+manual_circle_lbl = tk.Label(manual_tp_label_frame, text = "Calibration Circle Step")
+manual_circle_lbl.grid(row = 7, column = 0)
 
-manual_radius_lbl = tk.Label(manual_tp_label_frame, text = "Radius:")
-manual_radius_lbl.grid(row = 6, column = 0)
+manual_radius_lbl = tk.Label(manual_tp_label_frame, text = "Radius (mm):")
+manual_radius_lbl.grid(row = 8, column = 0)
 manual_radius_entry_txt = tk.StringVar()
 manual_radius_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_radius_entry_txt)
 manual_radius_entry_txt.set("100")
-manual_radius_txt.grid(row = 6, column = 1, padx=(10,10))
+manual_radius_txt.grid(row = 8, column = 1, padx=(10,10))
 manual_circle_steps_entry_txt = tk.StringVar()
 manual_circle_steps_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_circle_steps_entry_txt)
 manual_circle_steps_entry_txt.set("20")
-manual_circle_steps_txt.grid(row = 6, column = 2, padx=(10,10))
+manual_radius_lbl = tk.Label(manual_tp_label_frame, text = "Steps per 360deg:")
+manual_radius_lbl.grid(row = 9, column = 0)
+manual_circle_steps_txt.grid(row = 9, column = 1, padx=(10,10))
 manual_circle_init_btn = tk.Button(manual_tp_label_frame, text= 'Init. Circle', command = handler_manual_circle_init)
-manual_circle_init_btn.grid(row = 6, column = 3)
+manual_circle_init_btn.grid(row = 10, column = 0)
 manual_circle_btn = tk.Button(manual_tp_label_frame, text= 'XY Step', command = handler_manual_circle_xy)
-manual_circle_btn.grid(row = 6, column = 4)
+manual_circle_btn.grid(row = 10, column = 1)
 manual_circle_btn = tk.Button(manual_tp_label_frame, text= 'XZ Step', command = handler_manual_circle_xz)
-manual_circle_btn.grid(row = 6, column = 5)
+manual_circle_btn.grid(row = 10, column = 2)
 manual_circle_btn = tk.Button(manual_tp_label_frame, text= 'YZ Step', command = handler_manual_circle_yz)
-manual_circle_btn.grid(row = 6, column = 6)
+manual_circle_btn.grid(row = 10, column = 3)
 
 
 #-------------------------- MPFCS Manual XYZ Step
@@ -866,10 +881,10 @@ manual_speed_lbl = tk.Label(manual_xyz_label_frame, text = "Speed (mm/s???):")
 manual_speed_lbl.grid(row = 3, column = 0)
 manual_speed_entry_txt = tk.StringVar()
 manual_speed_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_speed_entry_txt)
-manual_speed_entry_txt.set("600")
+manual_speed_entry_txt.set("1200")
 manual_speed_txt.grid(row = 3, column = 1)
-manual_speed_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
-manual_speed_btn.grid(row = 3, column = 2)
+# manual_speed_btn = tk.Button(manual_xyz_label_frame, text= 'Send', command = handler_manual_loc)
+# manual_speed_btn.grid(row = 3, column = 2)
 
 manual_reset_btn = tk.Button(manual_xyz_label_frame, text= 'Reset', bg="red", command = handler_manual_reset)
 manual_reset_btn.grid(row = 4, column = 0)
@@ -889,14 +904,14 @@ Live_Panel.pack(fill = tk.BOTH, expand = True, side = 'left')
 tp_label_frame = ttk.LabelFrame(MPFCSTab, text = 'Tilt and Pan')
 tp_label_frame.pack(fill=tk.BOTH, expand=True, side = 'left')
 
-tilt_lbl = tk.Label(tp_label_frame, text = "Tilt Angle (-90 to 90deg):")
+tilt_lbl = tk.Label(tp_label_frame, text = "Tilt Angle (-30 to 90deg):")
 tilt_lbl.grid(row = 1, column = 0)
 tilt_txt = tk.Entry(tp_label_frame, width = 10, textvariable=tilt_entry_txt)
 tilt_txt.grid(row = 1, column = 1)
 # tilt_confm_lbl = tk.Label(tp_label_frame, text = "")
 # tilt_confm_lbl.grid(row = 1, column = 3)
 
-pan_lbl = tk.Label(tp_label_frame, text = "Pan Servo Angle (0-180):")
+pan_lbl = tk.Label(tp_label_frame, text = "Pan Servo Angle (-90 to 90deg):")
 pan_lbl.grid(row = 2, column = 0)
 pan_txt = tk.Entry(tp_label_frame, width = 10, textvariable=pan_entry_txt)
 pan_txt.grid(row = 2, column = 1)

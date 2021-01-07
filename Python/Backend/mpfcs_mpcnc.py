@@ -20,9 +20,23 @@ import time
     communication (see pyserial)
 """
 def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, ser_rambo):
+
+#         if x_entry_txt.get() != "?":
+#             ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X" + x_entry_txt.get() +\
+#                      " Y0 Z0").encode() + b'\n')
+#         if y_entry_txt.get() != "?":
+#             ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X0" +\
+#                      " Y" + y_entry_text.get() + " Z0").encode() + b'\n')
+    if x_entry_txt.get() == "?" and y_entry_txt.get() == "?":
+        ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X0 Y0" + " Z" + z_entry_txt.get()).encode() + b'\n')
+        return
+    
     x_loc_write = str(float(x_entry_txt.get())+ mpcnc_move_xyz.x_offset)
     y_loc_write = str(float(y_entry_txt.get())+ mpcnc_move_xyz.y_offset)
     z_loc_write = str(float(z_entry_txt.get())+ mpcnc_move_xyz.z_offset)
+    print("1: x_entry, x_offset = {}, {}".format(x_entry_txt.get(), str(mpcnc_move_xyz.x_offset)))
+    print("1: y_entry, y_offset = {}, {}".format(y_entry_txt.get(), str(mpcnc_move_xyz.y_offset)))
+    print("1: z_entry, z_offset = {}, {}".format(z_entry_txt.get(), str(mpcnc_move_xyz.z_offset)))
     ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X" + x_loc_write +\
                      " Y" + y_loc_write + " Z" + z_loc_write).encode() + b'\n')
 #     time.sleep(10)
@@ -32,9 +46,12 @@ def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, ser_r
     mpcnc_move_xyz.x_loc = float(x_loc_read)
     mpcnc_move_xyz.y_loc = float(y_loc_read)
     mpcnc_move_xyz.z_loc = float(z_loc_read)
+    print("2: x_loc, x_offset = {}, {}".format(x_loc_read, str(mpcnc_move_xyz.x_offset)))
+    print("2: y_loc, y_offset = {}, {}".format(y_loc_read, str(mpcnc_move_xyz.y_offset)))
+    print("2: z_loc, z_offset = {}, {}".format(z_loc_read, str(mpcnc_move_xyz.z_offset)))
     x_entry_txt.set(mpcnc_move_xyz.x_loc-mpcnc_move_xyz.x_offset)
     y_entry_txt.set(mpcnc_move_xyz.y_loc-mpcnc_move_xyz.y_offset)
-    x_entry_txt.set(mpcnc_move_xyz.z_loc-mpcnc_move_xyz.z_offset)
+    z_entry_txt.set(mpcnc_move_xyz.z_loc-mpcnc_move_xyz.z_offset)
     print("[X, Y, Z] = [{},{},{}]".format(x_entry_txt.get(), y_entry_txt.get(), z_entry_txt.get()))
 
 
@@ -48,7 +65,10 @@ def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, ser_r
 def mpcnc_pause(PauseDur, ser_rambo):
     ser_rambo.write(("G4 " + "P" + str(int(PauseDur*10))).encode() + b'\n')
     
-def mpcnc_home_xyz(home_sel, speed, x_entry_txt, y_entry_txt, z_entry_txt, ser_rambo):
+def mpcnc_home_xyz(home_sel, speed_entry_txt, x_entry_txt, y_entry_txt, z_entry_txt, ser_rambo):
+#     if z_entry_txt.get() == '?':
+#         ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X0 Y0 Z50").encode() + b'\n')
+
     if home_sel == 'xyz':
         ser_rambo.write(("G28").encode() + b'\n')
         x_loc, y_loc, z_loc = mpcnc_pos_read(ser_rambo)
@@ -98,21 +118,26 @@ def mpcnc_pos_read(ser_rambo):
         time.sleep(1)
         ser_rambo.write(("M114").encode() + b'\n')
         m114_output = marlin_readline(ser_rambo)
-
-#     print("m114_output 1 = {}".format(m114_output.decode('ascii')))
+        
+#     mpcnc_pos_read.m114_output_static = m114_output.decode('ascii')
+    print("m114_output 1 = {}".format(m114_output.decode('ascii')))
     start_time = time.perf_counter()
     duration = 0
-    while mpcnc_pos_read.m114_output_static == m114_output.decode('ascii') and duration < 10: # Wait to update the position until the position changes or timeouts
-        time.sleep(1)
+    sleep_time = 1
+    while (mpcnc_pos_read.m114_output_static == m114_output.decode('ascii')) and duration < 180: # Wait to update the position until the position changes or timeouts
         ser_rambo.write(("M114").encode() + b'\n')
         m114_output = marlin_readline(ser_rambo)
-#         print("m114_output 2 = {}".format(m114_output))
+        print("m114_output 2 = {}".format(m114_output))
+        time.sleep(sleep_time)
+        sleep_time += 1
+        if m114_output is None:
+            m114_output = (mpcnc_pos_read.m114_output_static).encode()
         duration = time.perf_counter()-start_time
     
-    if duration >= 30:
+    if duration >= 180:
         print("Timeout Error: Invalid Entry")        
     
-#     print("m114_output 3 = {}".format(m114_output))
+    print("m114_output 3 = {}".format(m114_output))
     mpcnc_pos_read.m114_output_static = m114_output.decode('ascii')
     m114_tokens = mpcnc_pos_read.m114_output_static.split(' ')
     
@@ -130,11 +155,16 @@ def marlin_readline_startup(ser_rambo):
         
 def marlin_readline(ser_rambo):
     marlin_output = ser_rambo.readline()
+    sleep_time = 1.0
+    busy_processing_notified = False
     while marlin_output != ''.encode(): 
 #         print("readline={}".format(marlin_output))
         if marlin_output == 'echo:busy: processing\n'.encode():
-            print('Busy Processing...')
-            time.sleep(1)
+            if busy_processing_notified is False:
+                busy_processing_notified = True
+                print('Busy Processing...')
+            time.sleep(sleep_time)
+#             sleep_time += 1
         elif marlin_output.decode('ascii')[0:2] == 'X:': # Waiting for the M114 output to be read
             return marlin_output
         marlin_output = ser_rambo.readline()       

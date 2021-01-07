@@ -26,25 +26,28 @@ sends command to the tilt motor.
     
 """
 def tp_head_tilt(tilt_entry_txt, ser_rambo):
+    tilt_deg_cal_offset = 2.0
     tilt_deg = float(tilt_entry_txt.get())
     emergency_stop_triggered = False
     _, _, rotation_max = tp_servo_specs(TILT_SERVO)
-    if (tilt_deg > rotation_max-90 or tilt_deg < -90):       
-        messagebox.showerror("Bounds Error", "Must be between {} and -90deg".format(rotation_max-90))
+    if (tilt_deg > rotation_max-90 or tilt_deg < -30):
+        messagebox.showerror("Bounds Error", "Must be between {} and -30deg".format(rotation_max-90)) #Note: -30deg limit due to Tilt Structure being obstructed Tilt Servo
         tilt_entry_txt.set(str(tp_usecs_2_deg(tp_head_tilt.tilt_usec_static, TILT_SERVO)))
     else:
 #         reset_btn.configure(state = 'normal')
-        tilt_usec = tp_deg_2_usecs(tilt_deg, TILT_SERVO)
+        
+        tilt_usec = tp_deg_2_usecs(tilt_deg+tilt_deg_cal_offset, TILT_SERVO)
         diff = abs(tp_head_tilt.tilt_usec_static-tilt_usec)
-        usec_steps = np.around(np.linspace(tp_head_tilt.tilt_usec_static, tilt_usec, np.around(float(diff)/10)+2))
+        step_divisor = 10000
+        usec_steps = np.around(np.linspace(tp_head_tilt.tilt_usec_static, tilt_usec, np.around(float(diff)/step_divisor)+2))
         print(usec_steps)
         for step, servo_input_usec in enumerate(usec_steps):    
             if emergency_stop_triggered == False:
                 ser_rambo.write(("M280"+" P0"+" S"+str(servo_input_usec)).encode() + b'\n') # tilt serial write
 #                 ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
-                tilt_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, TILT_SERVO)))
+                tilt_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, TILT_SERVO)-tilt_deg_cal_offset))
                 tp_head_tilt.tilt_usec_static = servo_input_usec
-                time.sleep(1)
+                time.sleep(0.5)
             else:                
                 break        
 
@@ -72,7 +75,8 @@ def tp_head_pan(pan_entry_txt, ser_rambo):
         print("tp_head_pan.pan_usec_static={}".format(tp_head_pan.pan_usec_static))
         print("pan_usec={}".format(pan_usec))        
         diff = abs(tp_head_pan.pan_usec_static-pan_usec)
-        usec_steps = np.around(np.linspace(tp_head_pan.pan_usec_static, pan_usec, np.around(diff/10)+2))
+        step_divisor = 200
+        usec_steps = np.around(np.linspace(tp_head_pan.pan_usec_static, pan_usec, np.around(diff/step_divisor)+2))
         print(usec_steps)
         for step, servo_input_usec in enumerate(usec_steps):    
             if emergency_stop_triggered == False:     
@@ -81,7 +85,7 @@ def tp_head_pan(pan_entry_txt, ser_rambo):
 #                 ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
                 pan_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, PAN_SERVO)))
                 tp_head_pan.pan_usec_static = servo_input_usec
-                time.sleep(1)
+                time.sleep(0.5)
             else:                
                 break
         
@@ -94,6 +98,13 @@ def tp_head_pan(pan_entry_txt, ser_rambo):
 """
 def tp_head_resets(reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo):
     reset_btn.configure(state = 'disabled')
+    deg_p_m_90 = -90
+    servo_input_usec = tp_deg_2_usecs(deg_p_m_90, PAN_SERVO)
+    ser_rambo.write(("M280"+" P3"+" S"+str(servo_input_usec)).encode() + b'\n') # Pan serial write
+#     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
+    pan_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, PAN_SERVO)))
+    tp_head_pan.pan_usec_static = int(servo_input_usec)
+    
     deg_p_m_90 = 0
     servo_input_usec = tp_deg_2_usecs(deg_p_m_90, TILT_SERVO)
     ser_rambo.write(("M280"+" P0"+" S"+str(servo_input_usec)).encode() + b'\n') # tilt serial write
@@ -101,11 +112,7 @@ def tp_head_resets(reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo):
     tilt_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, TILT_SERVO)))
     tp_head_tilt.tilt_usec_static = int(servo_input_usec)
     
-    servo_input_usec = tp_deg_2_usecs(deg_p_m_90, PAN_SERVO)
-    ser_rambo.write(("M280"+" P3"+" S"+str(servo_input_usec)).encode() + b'\n') # Pan serial write
-#     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
-    pan_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, PAN_SERVO)))
-    tp_head_pan.pan_usec_static = int(servo_input_usec)
+
 
 """
 Hitec HS-53 Servo Specs
