@@ -9,7 +9,9 @@ DEBUG = True
 TILT_SERVO = "HS-53"
 PAN_SERVO = "HS-5055MG-R"
 
+import os
 import numpy as np
+import pandas as pd
 import serial
 import time
 import pyvisa as visa
@@ -403,8 +405,10 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     firstRun = 0;
 
     numSamples = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
-    measurements = np.zeros((numSamples, 8))
-    measurementIndex = 0
+    measurements = {'Run number': [], 'Measurement num': [], 'X Pos': [], 'Y Pos': [], 'Z Pos': [], 
+                    'Tilt angle': [], 'Pan angle': [], 'Re[S11]': [], 'Re[S12]': [], 'Re[S21]': [], 'Re[S22]': [],
+                    'Im[S11]': [], 'Im[S12]': [], 'Im[S21]': [], 'Im[S22]': []}
+    meas_num = 0
 
     estimatedTime = (PauseDur+1)*numSamples
     print('Estimated time to completion (hours): ' + str(estimatedTime/3600))
@@ -550,18 +554,41 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 f.write(str(x_coord) + "," + str(y_coord) + "," + str(z_coord) + "," + str(value))
                 f.write("," + str(value2) + "," + str(value3) + "," + str(value4)) 
                 f.write("\n")
-  
-                #measurement matrix
-                #BUGS: we are having indexing problems here
-                measurements[measurementIndex][0] = int(measurementIndex)
-                measurements[measurementIndex][1] = x_coord
-                measurements[measurementIndex][2] = y_coord
-                measurements[measurementIndex][3] = z_coord
-                measurements[measurementIndex][4] = 0 #pitch angle
-                measurements[measurementIndex][5] = 0 #roll angle
-                measurements[measurementIndex][6] = center_freq #frequency 
-                measurements[measurementIndex][7] = value3 # this is just s21 for now; can add the others later
-                measurementIndex += 1
+
+                # NOTE: need to fix the variable names here after we 
+                # revert back the changes we made for testing/debugging 
+                # ALSO: might need to update how things are graphed
+
+                # currently run number is always set to 1
+                data['Run number'].append(1)
+
+                data['Measurement num'].append(meas_num + 1)
+                data['X Pos'].append(x_coord)
+                data['Y Pos'].append(y_coord)
+                data['Z Pos'].append(z_coord)
+
+                # taken from tilt and pan textbox entries
+                data['Tilt angle'].append(tilt) 
+                data['Pan angle'].append(pan)
+
+                # s params
+                s11 = np.asarray(s11)
+                s12 = np.asarray(s12)
+                s21 = np.asarray(s21)
+                s22 = np.asarray(s22) 
+
+                data['Re[S11]'].append(s11.real)
+                data['Re[S12]'].append(s12.real)
+                data['Re[S21]'].append(s21.real)
+                data['Re[S22]'].append(s22.real)
+
+                data['Im[S11]'].append(s11.imag)
+                data['Im[S12]'].append(s12.imag)
+                data['Im[S21]'].append(s21.imag)
+                data['Im[S22]'].append(s22.imag)
+
+                # increment 
+                meas_num = meas_num + 1
                  
     
     home_sel = 'x'
@@ -572,8 +599,13 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     
 #     ser_rambo.write(('G0 Z0').encode())
 
-    # write the numpy matrix to a file
-    np.savetxt(txt_fileName + '.csv', measurements, delimiter = ',')
+    # convert measurements to Pandas dataframe
+    df = pd.DataFrame(measurements)
+
+    # save to csv in current working directory 
+    file_path = os.getcwd()
+    df.to_csv(file_path)
+
 
     f.close()
     ser_rambo.close()
