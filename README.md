@@ -5,3 +5,9 @@ Code for the Mostly Printed Field Characterization System developed at the Senso
 User Guide: https://docs.google.com/document/d/1zT0MVRinPYnFrcWxW5tWwU1jPcRDlMU2P0lsJRck3NE
 
 A research paper describing the system and results will be forthcoming!
+=======
+User Guide:
+https://docs.google.com/document/d/1zT0MVRinPYnFrcWxW5tWwU1jPcRDlMU2P0lsJRck3NE
+
+A research paper describing the system and results will be forthcoming!
+
