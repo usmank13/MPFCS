@@ -72,8 +72,8 @@ def tp_head_pan(pan_entry_txt, ser_rambo):
     else:
 #         reset_btn.configure(state = 'normal')
         pan_usec = tp_deg_2_usecs(pan_deg, PAN_SERVO)
-        print("tp_head_pan.pan_usec_static={}".format(tp_head_pan.pan_usec_static))
-        print("pan_usec={}".format(pan_usec))        
+#         print("tp_head_pan.pan_usec_static={}".format(tp_head_pan.pan_usec_static))
+#         print("pan_usec={}".format(pan_usec))        
         diff = abs(tp_head_pan.pan_usec_static-pan_usec)
         step_divisor = 200
         usec_steps = np.around(np.linspace(tp_head_pan.pan_usec_static, pan_usec, np.around(diff/step_divisor)+2))

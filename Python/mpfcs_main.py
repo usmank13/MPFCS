@@ -15,7 +15,7 @@ import pandas as pd
 import serial
 import time
 import pyvisa as visa
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import tkinter as tk
 import matplotlib.pyplot as plt 
 from mpl_toolkits.mplot3d import Axes3D
@@ -182,9 +182,9 @@ def handler_manual_loc():
 
 # def handler_manual_step_loc_switch():
 #     if manual_loc_edit.get() == 0:
-#         manual_x_step_size_btn.configure(state = 'enabled')
-#         manual_y_step_size_btn.configure(state = 'enabled')
-#         manual_z_step_size_btn.configure(state = 'enabled')
+#         manual_x_step_size_btn.configure(state = 'normal')
+#         manual_y_step_size_btn.configure(state = 'normal')
+#         manual_z_step_size_btn.configure(state = 'normal')
 #         manual_x_btn.configure(state = 'disabled')
 #         manual_y_btn.configure(state = 'disabled')
 #         manual_z_btn.configure(state = 'disabled')
@@ -192,9 +192,9 @@ def handler_manual_loc():
 #         manual_x_step_size_btn.configure(state = 'disabled')
 #         manual_y_step_size_btn.configure(state = 'disabled')
 #         manual_z_step_size_btn.configure(state = 'disabled')
-#         manual_x_btn.configure(state = 'enabled')
-#         manual_y_btn.configure(state = 'enabled')
-#         manual_z_btn.configure(state = 'enabled')
+#         manual_x_btn.configure(state = 'normal')
+#         manual_y_btn.configure(state = 'normal')
+#         manual_z_btn.configure(state = 'normal')
 
 def handler_manual_reset():
     manual_x_entry_txt.set(str(0))
@@ -204,14 +204,26 @@ def handler_manual_reset():
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_manual_circle_init():
+    radius = float(manual_radius_entry_txt.get())
+    x_loc = mpcnc_move_xyz.x_loc
+    y_loc = mpcnc_move_xyz.y_loc
+    z_loc = mpcnc_move_xyz.z_loc
+    if x_loc-radius <= 0 or y_loc-radius<=0 or z_loc-radius<=0:
+        messagebox.showerror("Bounds Error", "Head Tip must be more than {}mm from volume edge".format(radius)) #Note: -30deg limit due to Tilt Structure being obstructed Tilt Servo
+        manual_circle_init_btn.configure('disabled')
+        return
+
+    manual_circle_xy_btn.configure(state = 'normal')
     handler_manual_circle_xy.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get())+1)
     handler_manual_circle_xy.step = 0
     handler_manual_circle_xy.x_entry_text = manual_x_entry_txt.get()
     handler_manual_circle_xy.y_entry_text = manual_y_entry_txt.get()
+    manual_circle_xz_btn.configure(state = 'normal')
     handler_manual_circle_xz.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get()))
     handler_manual_circle_xz.step = 0
     handler_manual_circle_xz.x_entry_text = manual_x_entry_txt.get()
     handler_manual_circle_xz.z_entry_text = manual_z_entry_txt.get()
+    manual_circle_yz_btn.configure(state = 'normal')
     handler_manual_circle_yz.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get()))
     handler_manual_circle_yz.step = 0
     handler_manual_circle_yz.y_entry_text = manual_y_entry_txt.get()
@@ -283,17 +295,25 @@ def handler_manual_circle_yz():
 def handler_go_home_x():
     mpcnc_home_xyz('x', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
     
+    
 def handler_go_home_y():
     mpcnc_home_xyz('y', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
     
 def handler_go_home_z():
     mpcnc_home_xyz('z', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
+    manual_z_entry_txt.set(str(50.0))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_go_home_xyz():
     mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
+    manual_z_entry_txt.set(str(50.0))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
 def handler_set_relative_home():
-    mpcnc_home_xyz('set', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)    
+    mpcnc_home_xyz('set', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
+    manual_circle_init_btn.configure(state = 'normal')    
         
 def handler_submit_values():
     submit_values(submit_val, start_btn, tp_reset_btn, mpcnc_vol_length_entry_txt, mpcnc_vol_width_entry_txt,\
@@ -700,7 +720,7 @@ manual_tilt_btn_step_pos.grid(row = 1, column = 4)
 manual_tilt_btn_step_neg = tk.Button(manual_tp_label_frame, text= '-', command = handler_tp_head_tilt_step_neg)
 manual_tilt_btn_step_neg.grid(row = 1, column = 5)
 
-manual_pan_lbl = tk.Label(manual_tp_label_frame, text = "Pan Angle (-90 to 90deg):")
+manual_pan_lbl = tk.Label(manual_tp_label_frame, text = "Pan Angle (-90 to 88deg):")
 manual_pan_lbl.grid(row = 2, column = 0)
 pan_entry_txt = tk.StringVar()
 manual_pan_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=pan_entry_txt)
@@ -750,14 +770,17 @@ manual_radius_lbl = tk.Label(manual_tp_label_frame, text = "Steps per 360deg:")
 manual_radius_lbl.grid(row = 9, column = 0)
 manual_circle_steps_txt.grid(row = 9, column = 1, padx=(10,10))
 manual_circle_init_btn = tk.Button(manual_tp_label_frame, text= 'Init. Circle', command = handler_manual_circle_init)
+manual_circle_init_btn.configure(state = 'disabled')
 manual_circle_init_btn.grid(row = 10, column = 0)
-manual_circle_btn = tk.Button(manual_tp_label_frame, text= 'XY Step', command = handler_manual_circle_xy)
-manual_circle_btn.grid(row = 10, column = 1)
-manual_circle_btn = tk.Button(manual_tp_label_frame, text= 'XZ Step', command = handler_manual_circle_xz)
-manual_circle_btn.grid(row = 10, column = 2)
-manual_circle_btn = tk.Button(manual_tp_label_frame, text= 'YZ Step', command = handler_manual_circle_yz)
-manual_circle_btn.grid(row = 10, column = 3)
-
+manual_circle_xy_btn = tk.Button(manual_tp_label_frame, text= 'XY Step', command = handler_manual_circle_xy)
+manual_circle_xy_btn.configure(state = 'disabled')
+manual_circle_xy_btn.grid(row = 10, column = 1)
+manual_circle_xz_btn = tk.Button(manual_tp_label_frame, text= 'XZ Step', command = handler_manual_circle_xz)
+manual_circle_xz_btn.configure(state = 'disabled')
+manual_circle_xz_btn.grid(row = 10, column = 2)
+manual_circle_yz_btn = tk.Button(manual_tp_label_frame, text= 'YZ Step', command = handler_manual_circle_yz)
+manual_circle_yz_btn.configure(state = 'disabled')
+manual_circle_yz_btn.grid(row = 10, column = 3)
 
 #-------------------------- MPFCS Manual XYZ Step
 
@@ -911,7 +934,7 @@ tilt_txt.grid(row = 1, column = 1)
 # tilt_confm_lbl = tk.Label(tp_label_frame, text = "")
 # tilt_confm_lbl.grid(row = 1, column = 3)
 
-pan_lbl = tk.Label(tp_label_frame, text = "Pan Servo Angle (-90 to 90deg):")
+pan_lbl = tk.Label(tp_label_frame, text = "Pan Servo Angle (-90 to 88deg):")
 pan_lbl.grid(row = 2, column = 0)
 pan_txt = tk.Entry(tp_label_frame, width = 10, textvariable=pan_entry_txt)
 pan_txt.grid(row = 2, column = 1)

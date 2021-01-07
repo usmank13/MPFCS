@@ -34,9 +34,13 @@ def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, ser_r
     x_loc_write = str(float(x_entry_txt.get())+ mpcnc_move_xyz.x_offset)
     y_loc_write = str(float(y_entry_txt.get())+ mpcnc_move_xyz.y_offset)
     z_loc_write = str(float(z_entry_txt.get())+ mpcnc_move_xyz.z_offset)
-    print("1: x_entry, x_offset = {}, {}".format(x_entry_txt.get(), str(mpcnc_move_xyz.x_offset)))
-    print("1: y_entry, y_offset = {}, {}".format(y_entry_txt.get(), str(mpcnc_move_xyz.y_offset)))
-    print("1: z_entry, z_offset = {}, {}".format(z_entry_txt.get(), str(mpcnc_move_xyz.z_offset)))
+    
+    if mpcnc_move_xyz.x_loc == x_loc_write and mpcnc_move_xyz.y_loc == y_loc_write and mpcnc_move_xyz.z_loc == z_loc_write:
+        messagebox.showerror("Position Error", "No position change requested")
+        return
+#     print("1: x_entry, x_offset = {}, {}".format(x_entry_txt.get(), str(mpcnc_move_xyz.x_offset)))
+#     print("1: y_entry, y_offset = {}, {}".format(y_entry_txt.get(), str(mpcnc_move_xyz.y_offset)))
+#     print("1: z_entry, z_offset = {}, {}".format(z_entry_txt.get(), str(mpcnc_move_xyz.z_offset)))
     ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X" + x_loc_write +\
                      " Y" + y_loc_write + " Z" + z_loc_write).encode() + b'\n')
 #     time.sleep(10)
@@ -46,9 +50,9 @@ def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, ser_r
     mpcnc_move_xyz.x_loc = float(x_loc_read)
     mpcnc_move_xyz.y_loc = float(y_loc_read)
     mpcnc_move_xyz.z_loc = float(z_loc_read)
-    print("2: x_loc, x_offset = {}, {}".format(x_loc_read, str(mpcnc_move_xyz.x_offset)))
-    print("2: y_loc, y_offset = {}, {}".format(y_loc_read, str(mpcnc_move_xyz.y_offset)))
-    print("2: z_loc, z_offset = {}, {}".format(z_loc_read, str(mpcnc_move_xyz.z_offset)))
+#     print("2: x_loc, x_offset = {}, {}".format(x_loc_read, str(mpcnc_move_xyz.x_offset)))
+#     print("2: y_loc, y_offset = {}, {}".format(y_loc_read, str(mpcnc_move_xyz.y_offset)))
+#     print("2: z_loc, z_offset = {}, {}".format(z_loc_read, str(mpcnc_move_xyz.z_offset)))
     x_entry_txt.set(mpcnc_move_xyz.x_loc-mpcnc_move_xyz.x_offset)
     y_entry_txt.set(mpcnc_move_xyz.y_loc-mpcnc_move_xyz.y_offset)
     z_entry_txt.set(mpcnc_move_xyz.z_loc-mpcnc_move_xyz.z_offset)
@@ -120,14 +124,14 @@ def mpcnc_pos_read(ser_rambo):
         m114_output = marlin_readline(ser_rambo)
         
 #     mpcnc_pos_read.m114_output_static = m114_output.decode('ascii')
-    print("m114_output 1 = {}".format(m114_output.decode('ascii')))
+#     print("m114_output 1 = {}".format(m114_output.decode('ascii')))
     start_time = time.perf_counter()
     duration = 0
     sleep_time = 1
     while (mpcnc_pos_read.m114_output_static == m114_output.decode('ascii')) and duration < 180: # Wait to update the position until the position changes or timeouts
         ser_rambo.write(("M114").encode() + b'\n')
         m114_output = marlin_readline(ser_rambo)
-        print("m114_output 2 = {}".format(m114_output))
+#         print("m114_output 2 = {}".format(m114_output))
         time.sleep(sleep_time)
         sleep_time += 1
         if m114_output is None:
@@ -137,7 +141,7 @@ def mpcnc_pos_read(ser_rambo):
     if duration >= 180:
         print("Timeout Error: Invalid Entry")        
     
-    print("m114_output 3 = {}".format(m114_output))
+#     print("m114_output 3 = {}".format(m114_output))
     mpcnc_pos_read.m114_output_static = m114_output.decode('ascii')
     m114_tokens = mpcnc_pos_read.m114_output_static.split(' ')
     
