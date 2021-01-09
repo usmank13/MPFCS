@@ -305,7 +305,7 @@ def handler_s11_plt():
     filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, s11, _, _, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    x, y, z, s11, _, _, _ = np.loadtxt(filename_input + '.csv', delimiter = ",", unpack = True) 
     ax1.set_title('S11')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
@@ -320,7 +320,7 @@ def handler_s12_plt():
     # s12.configure(state = 'disabled')
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, _, s12, _, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    x, y, z, _, s12, _, _ = np.loadtxt(filename_input + '.csv', delimiter = ",", unpack = True) 
     ax1.set_title('S12')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
@@ -334,7 +334,7 @@ def handler_s22_plt():
     filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, _, _, _, s22 = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    x, y, z, _, _, _, s22 = np.loadtxt(filename_input + '.csv', delimiter = ",", unpack = True) 
     ax1.set_title('S22')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
@@ -344,11 +344,26 @@ def handler_s22_plt():
     colorbar.set_label('Decibels')
     plt.show()
     
+# note: button should be pressed after all data is collected    
 def handler_s21_plt():
     filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, _, _, s21, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    x, y, z, _, _, s21, _ = np.loadtxt(filename_input + '.csv', delimiter = ",", unpack = True) 
+    dframe = pd.read_csv(filename_input + '.csv', delimiter=',')
+    x = np.asarray(dframe['X Pos'])
+    y = np.asarray(dframe['Y Pos'])
+    z = np.asarray(dframe['Z Pos'])
+    s21 = []
+    for i in range(len(dframe)):
+        arr =  df2['Re[S21]'][i]
+        arr = arr.strip("[]")
+        arr = np.fromstring(arr, dtype = np.float, sep = ' ')
+        mid = int(len(arr) / 2 - 0.5)
+        point = arr[mid]
+        s21.append(point)
+    s21 = np.asarray(s21)
+
     ax1.set_title('S21')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
@@ -407,7 +422,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     numSamples = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
     measurements = {'Run number': [], 'Measurement num': [], 'X Pos': [], 'Y Pos': [], 'Z Pos': [], 
                     'Tilt angle': [], 'Pan angle': [], 'Re[S11]': [], 'Re[S12]': [], 'Re[S21]': [], 'Re[S22]': [],
-                    'Im[S11]': [], 'Im[S12]': [], 'Im[S21]': [], 'Im[S22]': []}
+                    'Im[S11]': [], 'Im[S12]': [], 'Im[S21]': [], 'Im[S22]': [], 'S21 @ CF': []}
     meas_num = 0
 
     estimatedTime = (PauseDur+1)*numSamples
@@ -509,10 +524,10 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 mpcnc_pause(PauseDur, ser_rambo) 
                 time.sleep(3)
   
-                value = vna_record(num_points, 's11', visa_vna) #magnitude value
-                value2 = vna_record(num_points, 's12', visa_vna)
-                value3 = vna_record(num_points, 's21', visa_vna)
-                value4 = vna_record(num_points, 's22', visa_vna)
+                value, _ = vna_record(num_points, 's11', visa_vna) #magnitude value
+                value2, _ = vna_record(num_points, 's12', visa_vna)
+                value3, s21_cf = vna_record(num_points, 's21', visa_vna)
+                value4, _ = vna_record(num_points, 's22', visa_vna)
                   
 #                 print("s11: ", value, "\ns12: ", value2, "\ns21: ", value3, "\ns22: ", value4, "\n\n")
                 x_coords = np.concatenate([x_coords, np.array([x_coord])])
@@ -587,6 +602,8 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 data['Im[S21]'].append(s21.imag)
                 data['Im[S22]'].append(s22.imag)
 
+                data['S21 @ CF'].append(s21_cf)
+
                 # increment 
                 meas_num = meas_num + 1
                  
@@ -603,7 +620,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     df = pd.DataFrame(measurements)
 
     # save to csv in current working directory 
-    file_path = os.getcwd()
+    file_path = os.getcwd() + '\\' + file_entry_txt.get() + '.csv'
     df.to_csv(file_path)
 
 

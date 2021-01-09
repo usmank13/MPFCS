@@ -19,6 +19,8 @@ def vna_init(num_points, visa_vna, centerF, span): # add some more calibration f
     visa_vna.write('CWFREQ' + str(centerF) + 'MHZ')
     # visa_vna.write('STAR' + str(float(centerF-span/2)) + 'MHZ')
     # visa_vna.write('STOP' + str(float(centerF+span/2)) + 'MHZ')
+    F_start = float(centerF - span/2)
+    F_stop = float(center + span/2)
     visa_vna.write('HOLD;LINFREQ;SWET1.000000E-1S;STAR' + str(F_start) + 'MHZ;STOP' + str(F_stop) + 'MHZ;CONT;') 
     visa_vna.query('SPAN?')
     # visa_vna.query('CWFFREQ?')
@@ -33,7 +35,8 @@ def vna_init(num_points, visa_vna, centerF, span): # add some more calibration f
 @param[in] sParam: the S-Parameter to measure (given as a string in the following format, e.g. 'S21')
 @param[in] visa_vna: VNA object (see pyvisa)
 
-@param[out] data_arr: Returns the S Parameter data
+@param[out] sequence: Returns the S Parameter data as a sequence of length num_points
+@param[out] centerf_point: Returns the point at the center frequency
 """
 def vna_record(num_points, sParam, visa_vna):  # step length is passed to find the correct element
     visa_vna.write(sParam +';')
@@ -52,10 +55,10 @@ def vna_record(num_points, sParam, visa_vna):  # step length is passed to find t
 #     print("Outpdata = {}".format(data2))
 #     data3 = visa_vna.write('outpform')
 #     print("Outpform = {}".format(data3))
-    data4 = visa_vna.query('outpforf')
+    sequence = visa_vna.query('outpforf')
 #     print("{} - Outpforf = {}".format(sParam, data4))
-#   return data_arr[0]
-    return data4 # might return another val as well for the center freq
+    centerf_point = data_arr[0]
+    return sequence, centerf_point # might return another val as well for the center freq
 
 
 """
