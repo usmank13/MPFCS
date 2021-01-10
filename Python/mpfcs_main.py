@@ -301,11 +301,26 @@ def handler_send():
 def handler_reset_graph():
     file_txt.configure(state = 'normal')
     
+#NOTE: should probably clean this up and make the graphing more modular,
+# don't really need diff functions for each s param
 def handler_s11_plt():
     filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, s11, _, _, _ = np.loadtxt(filename_input + '.csv', delimiter = ",", unpack = True) 
+    dframe = pd.read_csv(filename_input + '.csv', delimiter=',')
+    x = np.asarray(dframe['X Pos'])
+    y = np.asarray(dframe['Y Pos'])
+    z = np.asarray(dframe['Z Pos'])
+    s11 = []
+    # append the middle point to s11
+    for i in range(len(dframe)):
+        arr =  df2['Re[S11]'][i]
+        arr = arr.strip("[]")
+        arr = np.fromstring(arr, dtype = np.float, sep = ' ')
+        mid = int(len(arr) / 2 - 0.5)
+        point = arr[mid]
+        s11.append(point)
+    s11 = np.asarray(s11)
     ax1.set_title('S11')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
@@ -317,10 +332,23 @@ def handler_s11_plt():
     
 def handler_s12_plt():
     filename_input = file_entry_txt.get()
-    # s12.configure(state = 'disabled')
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, _, s12, _, _ = np.loadtxt(filename_input + '.csv', delimiter = ",", unpack = True) 
+    dframe = pd.read_csv(filename_input + '.csv', delimiter=',')
+    x = np.asarray(dframe['X Pos'])
+    y = np.asarray(dframe['Y Pos'])
+    z = np.asarray(dframe['Z Pos'])
+    s12 = []
+    # append the middle point to s12
+    for i in range(len(dframe)):
+        arr =  df2['Re[S12]'][i]
+        arr = arr.strip("[]")
+        arr = np.fromstring(arr, dtype = np.float, sep = ' ')
+        mid = int(len(arr) / 2 - 0.5)
+        point = arr[mid]
+        s12.append(point)
+    s12 = np.asarray(s12)
+
     ax1.set_title('S12')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
@@ -328,13 +356,27 @@ def handler_s12_plt():
     p = ax1.scatter(x, y, z, c = s12, cmap = 'jet')
     colorbar = fig.colorbar(p)
     colorbar.set_label('Decibels')
-    plt.show()
-    
+    plt.show()    
+
 def handler_s22_plt():
     filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, _, _, _, s22 = np.loadtxt(filename_input + '.csv', delimiter = ",", unpack = True) 
+    dframe = pd.read_csv(filename_input + '.csv', delimiter=',')
+    x = np.asarray(dframe['X Pos'])
+    y = np.asarray(dframe['Y Pos'])
+    z = np.asarray(dframe['Z Pos'])
+    s22 = []
+    # append the middle point to s22
+    for i in range(len(dframe)):
+        arr =  df2['Re[S22]'][i]
+        arr = arr.strip("[]")
+        arr = np.fromstring(arr, dtype = np.float, sep = ' ')
+        mid = int(len(arr) / 2 - 0.5)
+        point = arr[mid]
+        s22.append(point)
+    s22 = np.asarray(s22)
+
     ax1.set_title('S22')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
@@ -345,16 +387,17 @@ def handler_s22_plt():
     plt.show()
     
 # note: button should be pressed after all data is collected    
+# for s21 I should use the special column maybe
 def handler_s21_plt():
     filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, _, _, s21, _ = np.loadtxt(filename_input + '.csv', delimiter = ",", unpack = True) 
     dframe = pd.read_csv(filename_input + '.csv', delimiter=',')
     x = np.asarray(dframe['X Pos'])
     y = np.asarray(dframe['Y Pos'])
     z = np.asarray(dframe['Z Pos'])
     s21 = []
+    # append the middle point to s21
     for i in range(len(dframe)):
         arr =  df2['Re[S21]'][i]
         arr = arr.strip("[]")
