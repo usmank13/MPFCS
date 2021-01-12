@@ -28,7 +28,7 @@ def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, ser_r
 #             ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X0" +\
 #                      " Y" + y_entry_text.get() + " Z0").encode() + b'\n')
     if x_entry_txt.get() == "?" and y_entry_txt.get() == "?":
-        ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X0 Y0" + " Z" + z_entry_txt.get()).encode() + b'\n')
+        ser_rambo.write(("G0"+" F" + str(float(speed_entry_txt.get())/4) + " X0 Y0" + " Z" + z_entry_txt.get()).encode() + b'\n')
         return
     
     x_loc_write = str(float(x_entry_txt.get())+ mpcnc_move_xyz.x_offset)
@@ -41,9 +41,11 @@ def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, ser_r
 #     print("1: x_entry, x_offset = {}, {}".format(x_entry_txt.get(), str(mpcnc_move_xyz.x_offset)))
 #     print("1: y_entry, y_offset = {}, {}".format(y_entry_txt.get(), str(mpcnc_move_xyz.y_offset)))
 #     print("1: z_entry, z_offset = {}, {}".format(z_entry_txt.get(), str(mpcnc_move_xyz.z_offset)))
+    ser_rambo.write(("G0"+" F" + str(float(speed_entry_txt.get())/4) + " Z" + z_loc_write).encode() + b'\n')
+    ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
+    
     ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X" + x_loc_write +\
-                     " Y" + y_loc_write + " Z" + z_loc_write).encode() + b'\n')
-#     time.sleep(10)
+                     " Y" + y_loc_write).encode() + b'\n')
     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
     
     x_loc_read, y_loc_read, z_loc_read = mpcnc_pos_read(ser_rambo)
@@ -133,7 +135,7 @@ def mpcnc_pos_read(ser_rambo):
         m114_output = marlin_readline(ser_rambo)
 #         print("m114_output 2 = {}".format(m114_output))
         time.sleep(sleep_time)
-        sleep_time += 1
+#         sleep_time += 1
         if m114_output is None:
             m114_output = (mpcnc_pos_read.m114_output_static).encode()
         duration = time.perf_counter()-start_time

@@ -33,8 +33,8 @@ a4982_gear_teeth = 16.0;
 belt_teeth_per_mm = 1.0/2.0; # Approximated, due to stretch of band
 leadscrew_pitch = 4*2 #1.4111 # ??? 2 mm/revolution = T8
 
-XY_MM_PER_STEP = 1.0/(a4982_steps_per_rev*a4982_u_steps_per_step*belt_teeth_per_mm/a4982_gear_teeth)
-Z_MM_PER_STEP = 1.0/(a4982_steps_per_rev*a4982_u_steps_per_step/leadscrew_pitch)
+XY_MM_PER_STEP = 0.2 # 1.0/(a4982_steps_per_rev*a4982_u_steps_per_step*belt_teeth_per_mm/a4982_gear_teeth)
+Z_MM_PER_STEP = 0.2 #1.0/(a4982_steps_per_rev*a4982_u_steps_per_step/leadscrew_pitch)
 
 if DEBUG == False:
 #     Initializing communication 
@@ -218,13 +218,15 @@ def handler_manual_circle_init():
     handler_manual_circle_xy.step = 0
     handler_manual_circle_xy.x_entry_text = manual_x_entry_txt.get()
     handler_manual_circle_xy.y_entry_text = manual_y_entry_txt.get()
+    
     manual_circle_xz_btn.configure(state = 'normal')
-    handler_manual_circle_xz.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get()))
+    handler_manual_circle_xz.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get())+1)
     handler_manual_circle_xz.step = 0
     handler_manual_circle_xz.x_entry_text = manual_x_entry_txt.get()
     handler_manual_circle_xz.z_entry_text = manual_z_entry_txt.get()
+    
     manual_circle_yz_btn.configure(state = 'normal')
-    handler_manual_circle_yz.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get()))
+    handler_manual_circle_yz.angles = np.linspace(0, 360, int(manual_circle_steps_entry_txt.get())+1)
     handler_manual_circle_yz.step = 0
     handler_manual_circle_yz.y_entry_text = manual_y_entry_txt.get()
     handler_manual_circle_yz.z_entry_text = manual_z_entry_txt.get()
@@ -257,7 +259,7 @@ def handler_manual_circle_xz():
         manual_z_entry_txt.set(handler_manual_circle_xz.z_entry_text)
         mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
-    angle = handler_manual_circle_xz.angles(handler_manual_circle_xz.step)
+    angle = handler_manual_circle_xz.angles[handler_manual_circle_xz.step]
     radius = float(manual_radius_entry_txt.get())    
     radian = angle*(2*np.pi/360)
     x_pos = radius*np.cos(radian)
@@ -272,25 +274,26 @@ def handler_manual_circle_xz():
     handler_manual_circle_xz.step += 1
     
 def handler_manual_circle_yz():
-    if handler_manual_circle_yz.y_entry_text != manual_y_entry_txt.get()\
-        or handler_manual_circle_yz.z_entry_text != manual_z_entry_txt.get():
+    if handler_manual_circle_yz.z_entry_text != manual_z_entry_txt.get()\
+        or handler_manual_circle_yz.y_entry_text != manual_y_entry_txt.get():
         manual_y_entry_txt.set(handler_manual_circle_yz.y_entry_text)
         manual_z_entry_txt.set(handler_manual_circle_yz.z_entry_text)
         mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
-    angle = handler_manual_circle_xz.angles(handler_manual_circle_xz.step)
+    angle = handler_manual_circle_yz.angles[handler_manual_circle_yz.step]
     radius = float(manual_radius_entry_txt.get())    
     radian = angle*(2*np.pi/360)
     y_pos = radius*np.cos(radian)
     z_pos = radius*np.sin(radian)
     manual_y_entry_txt.set(str(y_pos))
     manual_z_entry_txt.set(str(z_pos))
-    print("Circle Target X,Z:{},{}".format(manualy_entry_txt.get(), manual_z_entry_txt.get()))
+    print("Circle Target Y,Z:{},{}".format(manual_y_entry_txt.get(), manual_z_entry_txt.get()))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 #         time.sleep(30)
-    print("Circle Result X,Z:{},{}".format(manual_y_entry_txt.get(), manual_z_entry_txt.get()))
-    handler_manual_circle_xz.step += 1
+    print("Circle Result Y,Z:{},{}".format(manual_y_entry_txt.get(), manual_z_entry_txt.get()))
+    handler_manual_circle_yz.step += 1
+
     
 def handler_go_home_x():
     mpcnc_home_xyz('x', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
@@ -301,13 +304,13 @@ def handler_go_home_y():
     
 def handler_go_home_z():
     mpcnc_home_xyz('z', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
-    manual_z_entry_txt.set(str(50.0))
+    manual_z_entry_txt.set(str(20.0))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_go_home_xyz():
     mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
-    manual_z_entry_txt.set(str(50.0))
+    manual_z_entry_txt.set(str(20.0))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
@@ -900,7 +903,7 @@ manual_z_step_pos_btn.grid(row = 2, column = 4)
 manual_z_step_neg_btn = tk.Button(manual_xyz_label_frame, text= '-', command = handler_manual_step_neg_z)
 manual_z_step_neg_btn.grid(row = 2, column = 5)
 
-manual_speed_lbl = tk.Label(manual_xyz_label_frame, text = "Speed (mm/s???):")
+manual_speed_lbl = tk.Label(manual_xyz_label_frame, text = "Speed (mm/min):")
 manual_speed_lbl.grid(row = 3, column = 0)
 manual_speed_entry_txt = tk.StringVar()
 manual_speed_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_speed_entry_txt)
@@ -1116,6 +1119,7 @@ if DEBUG == False:
     pan_entry_txt.set("0")
     tp_head_resets(tp_reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo)
     mpcnc_pos_read.m114_output_static = ""
+    ser_rambo.write(("M92 Z2267.72").encode() + b'\n')
 #     mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
 
 ######################### end of code
