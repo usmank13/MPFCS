@@ -17,13 +17,25 @@ def vna_init(num_points, visa_vna, centerF, span): # add some more calibration f
     visa_vna.query('*IDN?')
     visa_vna.write('poin' + str(num_points))
     visa_vna.write('CWFREQ' + str(centerF) + 'MHZ')
+    f_start = round(float(centerF-span/2),2)
+    f_stop = round(float(centerF+span/2),2)
+#     print(f_start)
+#     print(f_stop)
     # visa_vna.write('STAR' + str(float(centerF-span/2)) + 'MHZ')
     # visa_vna.write('STOP' + str(float(centerF+span/2)) + 'MHZ')
-    visa_vna.write('HOLD;LINFREQ;SWET1.000000E-1S;STAR' + str(F_start) + 'MHZ;STOP' + str(F_stop) + 'MHZ;CONT;') 
-    visa_vna.query('SPAN?')
-    # visa_vna.query('CWFFREQ?')
+    visa_vna.write('HOLD')
+    visa_vna.write('LINFREQ')
+    visa_vna.write('SWET1.000000E-1S')
+    visa_vna.write('STAR' + str(f_start) + 'MHZ')
+    visa_vna.write('STOP' + str(f_stop) + 'MHZ')
+    visa_vna.write('CONT')
+    
+    
+#     print("Span: {}".format(visa_vna.query('SPAN?')))
+#     print("CW Freq: {}".format(visa_vna.query('CWFREQ?')))
+#     print("Num Points: {}".format(visa_vna.query('poin?')))
+#     print("Power: {}".format(visa_vna.query('POWE?')))
     #visa_vna.write('POWE' + str(power_level) + 'DB')
-    # calibration procedures? We added extra cable 
 
 # TODO: RETURN THE REAL AND IMAGINARY VALS
 """
@@ -37,25 +49,55 @@ def vna_init(num_points, visa_vna, centerF, span): # add some more calibration f
 """
 def vna_record(num_points, sParam, visa_vna):  # step length is passed to find the correct element
     visa_vna.write(sParam +';')
+    visa_vna.write('LOGM')    
     visa_vna.write('mark1')
     visa_vna.write('markbuck' + str(int((num_points-1) / 2))) # selects the point at the center frequency. 
         # Perhaps I should let the user select which frequency they want to check 
     data = visa_vna.query('outpmark')
     data_arr = np.fromstring(data, sep = ',')
     
-#     data = 0.0
-#     data_arr = np.array([0.0, 0.1])
     
-    visa_vna.write('FORM4')
+#     visa_vna.write('FORM4')
 #     data2 = visa_vna.query('outpdata')
-#     print("\n\n-----------------")
+#     print("\n\n{}-----------------".format(sParam))
+#     print(data_arr)
+    
+#     print('\nSMIMLOG')
+#     visa_vna.write('SMIMLOG')    
+#     visa_vna.write('mark1')
+#     visa_vna.write('markbuck' + str(int((num_points-1) / 2))) # selects the point at the center frequency. 
+#         # Perhaps I should let the user select which frequency they want to check 
+#     data = visa_vna.query('outpmark')
+#     data_arr = np.fromstring(data, sep = ',')
+#     print(data_arr)
+#     
+#     print('\nSMIC')
+#     visa_vna.write('SMIC')    
+#     visa_vna.write('mark1')
+#     visa_vna.write('markbuck' + str(int((num_points-1) / 2))) # selects the point at the center frequency. 
+#         # Perhaps I should let the user select which frequency they want to check 
+#     data = visa_vna.query('outpmark')
+#     data_arr = np.fromstring(data, sep = ',')
+#     print(data_arr)
+    
+#     print('\nSMIMRI')
+#     visa_vna.write('SMIMRI')    
+#     visa_vna.write('mark1')
+#     visa_vna.write('markbuck' + str(int((num_points-1) / 2))) # selects the point at the center frequency. 
+#         # Perhaps I should let the user select which frequency they want to check 
+#     data = visa_vna.query('outpmark')
+#     data_arr = np.fromstring(data, sep = ',')
+#     print(data_arr)
+
+    
 #     print("Outpdata = {}".format(data2))
 #     data3 = visa_vna.write('outpform')
 #     print("Outpform = {}".format(data3))
-    data4 = visa_vna.query('outpforf')
+# !!! ooutpforf seems to work!!!
+#     data4 = visa_vna.query('outpforf')
 #     print("{} - Outpforf = {}".format(sParam, data4))
-#   return data_arr[0]
-    return data4 # might return another val as well for the center freq
+    return data_arr[0]
+#     return data4 # might return another val as well for the center freq
 
 
 """

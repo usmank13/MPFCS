@@ -32,7 +32,7 @@ def tp_head_tilt(tilt_entry_txt, ser_rambo):
     _, _, rotation_max = tp_servo_specs(TILT_SERVO)
     if (tilt_deg > rotation_max-90 or tilt_deg < -30):
         messagebox.showerror("Bounds Error", "Must be between {} and -30deg".format(rotation_max-90)) #Note: -30deg limit due to Tilt Structure being obstructed Tilt Servo
-        tilt_entry_txt.set(str(tp_usecs_2_deg(tp_head_tilt.tilt_usec_static, TILT_SERVO)))
+        tilt_entry_txt.set(str(round(tp_usecs_2_deg(tp_head_tilt.tilt_usec_static, TILT_SERVO),3)))
     else:
 #         reset_btn.configure(state = 'normal')
         
@@ -45,7 +45,7 @@ def tp_head_tilt(tilt_entry_txt, ser_rambo):
             if emergency_stop_triggered == False:
                 ser_rambo.write(("M280"+" P0"+" S"+str(servo_input_usec)).encode() + b'\n') # tilt serial write
 #                 ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
-                tilt_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, TILT_SERVO)-tilt_deg_cal_offset))
+                tilt_entry_txt.set(str(round(tp_usecs_2_deg(servo_input_usec, TILT_SERVO)-tilt_deg_cal_offset,3)))
                 tp_head_tilt.tilt_usec_static = servo_input_usec
                 time.sleep(0.5)
             else:                
@@ -68,14 +68,14 @@ def tp_head_pan(pan_entry_txt, ser_rambo):
     _, _, rotation_max = tp_servo_specs(PAN_SERVO)
     if (pan_deg > rotation_max-90 or pan_deg < -90):
         messagebox.showerror("Bounds Error", "Must be between {} and -90deg".format(rotation_max-90))
-        pan_entry_txt.set(str(tp_usecs_2_deg(tp_head_pan.pan_usec_static, PAN_SERVO)))
+        pan_entry_txt.set(str(round(tp_usecs_2_deg(tp_head_pan.pan_usec_static, PAN_SERVO),3)))
     else:
 #         reset_btn.configure(state = 'normal')
         pan_usec = tp_deg_2_usecs(pan_deg, PAN_SERVO)
 #         print("tp_head_pan.pan_usec_static={}".format(tp_head_pan.pan_usec_static))
 #         print("pan_usec={}".format(pan_usec))        
         diff = abs(tp_head_pan.pan_usec_static-pan_usec)
-        step_divisor = 200
+        step_divisor = 100
         usec_steps = np.around(np.linspace(tp_head_pan.pan_usec_static, pan_usec, np.around(diff/step_divisor)+2))
         print(usec_steps)
         for step, servo_input_usec in enumerate(usec_steps):    
@@ -83,7 +83,7 @@ def tp_head_pan(pan_entry_txt, ser_rambo):
                 print(servo_input_usec)
                 ser_rambo.write(("M280"+" P3"+" S"+str(servo_input_usec)).encode() + b'\n') # pan serial write
 #                 ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
-                pan_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, PAN_SERVO)))
+                pan_entry_txt.set(str(round(tp_usecs_2_deg(servo_input_usec, PAN_SERVO),3)))
                 tp_head_pan.pan_usec_static = servo_input_usec
                 time.sleep(0.5)
             else:                
@@ -102,14 +102,14 @@ def tp_head_resets(reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo):
     servo_input_usec = tp_deg_2_usecs(deg_p_m_90, PAN_SERVO)
     ser_rambo.write(("M280"+" P3"+" S"+str(servo_input_usec)).encode() + b'\n') # Pan serial write
 #     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
-    pan_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, PAN_SERVO)))
+    pan_entry_txt.set(str(round(tp_usecs_2_deg(servo_input_usec, PAN_SERVO),3)))
     tp_head_pan.pan_usec_static = int(servo_input_usec)
     
     deg_p_m_90 = 0
     servo_input_usec = tp_deg_2_usecs(deg_p_m_90, TILT_SERVO)
     ser_rambo.write(("M280"+" P0"+" S"+str(servo_input_usec)).encode() + b'\n') # tilt serial write
 #     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
-    tilt_entry_txt.set(str(tp_usecs_2_deg(servo_input_usec, TILT_SERVO)))
+    tilt_entry_txt.set(str(round(tp_usecs_2_deg(servo_input_usec, TILT_SERVO),3)))
     tp_head_tilt.tilt_usec_static = int(servo_input_usec)
     
 

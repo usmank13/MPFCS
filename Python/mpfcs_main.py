@@ -59,7 +59,7 @@ def handler_tp_head_tilt_step_pos():
         manual_tilt_step = float(tilt_entry_txt.get())
     
 #     print("{}, {}, {}".format(manual_tilt_step, float(tilt_entry_txt.get()), float(tilt_entry_txt.get()) + manual_tilt_step))
-    tilt_entry_txt.set(str(float(tilt_entry_txt.get()) + manual_tilt_step))
+    tilt_entry_txt.set(str(round(float(tilt_entry_txt.get()) + manual_tilt_step,3)))
     tp_head_tilt(tilt_entry_txt, ser_rambo)
     
 def handler_tp_head_tilt_step_neg():
@@ -68,7 +68,7 @@ def handler_tp_head_tilt_step_neg():
     else:
         manual_tilt_step = -float(tilt_entry_txt.get())
         
-    tilt_entry_txt.set(str(float(tilt_entry_txt.get()) + manual_tilt_step))
+    tilt_entry_txt.set(str(round(float(tilt_entry_txt.get()) + manual_tilt_step,3)))
     tp_head_tilt(tilt_entry_txt, ser_rambo)
     
 def handler_tp_head_pan():
@@ -80,7 +80,7 @@ def handler_tp_head_pan_step_pos():
     else:
         manual_pan_step = float(pan_entry_txt.get())
         
-    pan_entry_txt.set(str(float(pan_entry_txt.get()) + manual_pan_step))
+    pan_entry_txt.set(str(round(float(pan_entry_txt.get()) + manual_pan_step,3)))
     tp_head_pan(pan_entry_txt, ser_rambo)
     
 def handler_tp_head_pan_step_neg():
@@ -89,7 +89,7 @@ def handler_tp_head_pan_step_neg():
     else:
         manual_pan_step = -float(pan_entry_txt.get())
         
-    pan_entry_txt.set(str(float(pan_entry_txt.get()) + manual_pan_step))
+    pan_entry_txt.set(str(round(float(pan_entry_txt.get()) + manual_pan_step,3)))
     tp_head_pan(pan_entry_txt, ser_rambo)
 
 def handler_tp_head_resets():
@@ -122,7 +122,7 @@ def handler_manual_step_pos_x():
     else:
         manual_x_step = float(manual_x_step_entry_txt.get())
         
-    manual_x_entry_txt.set(str(float(manual_x_entry_txt.get()) + manual_x_step))
+    manual_x_entry_txt.set(str(round(float(manual_x_entry_txt.get()) + manual_x_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
@@ -132,7 +132,7 @@ def handler_manual_step_neg_x():
     else:
         manual_x_step = -float(manual_x_step_entry_txt.get())
         
-    manual_x_entry_txt.set(str(float(manual_x_entry_txt.get()) + manual_x_step))
+    manual_x_entry_txt.set(str(round(float(manual_x_entry_txt.get()) + manual_x_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
@@ -142,7 +142,7 @@ def handler_manual_step_pos_y():
     else:
         manual_y_step = float(manual_y_step_entry_txt.get())
         
-    manual_y_entry_txt.set(str(float(manual_y_entry_txt.get()) + manual_y_step))
+    manual_y_entry_txt.set(str(round(float(manual_y_entry_txt.get()) + manual_y_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
@@ -152,7 +152,7 @@ def handler_manual_step_neg_y():
     else:
         manual_y_step = -float(manual_y_step_entry_txt.get())
         
-    manual_y_entry_txt.set(str(float(manual_y_entry_txt.get()) + manual_y_step))
+    manual_y_entry_txt.set(str(round(float(manual_y_entry_txt.get()) + manual_y_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
@@ -162,7 +162,7 @@ def handler_manual_step_pos_z():
     else:
         manual_z_step = float(manual_z_step_entry_txt.get())
         
-    manual_z_entry_txt.set(str(float(manual_z_entry_txt.get()) + manual_z_step))
+    manual_z_entry_txt.set(str(round(float(manual_z_entry_txt.get()) + manual_z_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
@@ -172,7 +172,7 @@ def handler_manual_step_neg_z():
     else:
         manual_z_step = -float(manual_z_step_entry_txt.get())
         
-    manual_z_entry_txt.set(str(float(manual_z_entry_txt.get()) + manual_z_step))
+    manual_z_entry_txt.set(str(round(float(manual_z_entry_txt.get()) + manual_z_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
@@ -197,9 +197,9 @@ def handler_manual_loc():
 #         manual_z_btn.configure(state = 'normal')
 
 def handler_manual_reset():
-    manual_x_entry_txt.set(str(0))
-    manual_y_entry_txt.set(str(0))
-    manual_z_entry_txt.set(str(0))
+    manual_x_entry_txt.set(str(round(0,3)))
+    manual_y_entry_txt.set(str(round(0,3)))
+    manual_z_entry_txt.set(str(round(0,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
@@ -234,8 +234,8 @@ def handler_manual_circle_init():
 def handler_manual_circle_xy():
     if handler_manual_circle_xy.x_entry_text != manual_x_entry_txt.get()\
         or handler_manual_circle_xy.y_entry_text != manual_y_entry_txt.get():
-        manual_x_entry_txt.set(handler_manual_circle_xy.x_entry_text)
-        manual_y_entry_txt.set(handler_manual_circle_xy.y_entry_text)
+        manual_x_entry_txt.set(str(round(float(handler_manual_circle_xy.x_entry_text),3)))
+        manual_y_entry_txt.set(str(round(float(handler_manual_circle_xy.y_entry_text),3)))
         mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     angle = handler_manual_circle_xy.angles[handler_manual_circle_xy.step]
@@ -243,20 +243,23 @@ def handler_manual_circle_xy():
     radian = angle*(2*np.pi/360)
     x_pos = radius*np.cos(radian)
     y_pos = radius*np.sin(radian)
-    manual_x_entry_txt.set(str(x_pos))
-    manual_y_entry_txt.set(str(y_pos))
-    print("Circle Target X,Y:{},{}".format(manual_x_entry_txt.get(), manual_y_entry_txt.get()))
+    manual_x_entry_txt.set(str(round(x_pos,3)))
+    manual_y_entry_txt.set(str(round(y_pos,3)))
+    print("Step: {} - Circle Target X,Y: {},{}".format(handler_manual_circle_xy.step+1, manual_x_entry_txt.get(), manual_y_entry_txt.get()))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 #         time.sleep(30)
-    print("Circle Result X,Y:{},{}".format(manual_x_entry_txt.get(), manual_y_entry_txt.get()))
-    handler_manual_circle_xy.step += 1
+#     print("Circle Result X,Y:{},{}".format(manual_x_entry_txt.get(), manual_y_entry_txt.get()))
+    if len(handler_manual_circle_xy.angles)-1 == handler_manual_circle_xy.step:
+        handler_manual_circle_xy.step = 0;
+    else:
+        handler_manual_circle_xy.step += 1;
     
 def handler_manual_circle_xz():
     if handler_manual_circle_xz.x_entry_text != manual_x_entry_txt.get()\
         or handler_manual_circle_xz.z_entry_text != manual_z_entry_txt.get():
-        manual_x_entry_txt.set(handler_manual_circle_xz.x_entry_text)
-        manual_z_entry_txt.set(handler_manual_circle_xz.z_entry_text)
+        manual_x_entry_txt.set(str(round(float(handler_manual_circle_xz.x_entry_text),3)))
+        manual_z_entry_txt.set(str(round(float(handler_manual_circle_xz.z_entry_text),3)))
         mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     angle = handler_manual_circle_xz.angles[handler_manual_circle_xz.step]
@@ -264,20 +267,23 @@ def handler_manual_circle_xz():
     radian = angle*(2*np.pi/360)
     x_pos = radius*np.cos(radian)
     z_pos = radius*np.sin(radian)
-    manual_x_entry_txt.set(str(x_pos))
-    manual_z_entry_txt.set(str(z_pos))
-    print("Circle Target X,Z:{},{}".format(manual_x_entry_txt.get(), manual_z_entry_txt.get()))
+    manual_x_entry_txt.set(str(round(x_pos,3)))
+    manual_z_entry_txt.set(str(round(z_pos,3)))
+    print("Step: {} - Circle Target X,Z: {},{}".format(handler_manual_circle_xz.step+1, manual_x_entry_txt.get(), manual_z_entry_txt.get()))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 #         time.sleep(30)
-    print("Circle Result X,Z:{},{}".format(manual_x_entry_txt.get(), manual_z_entry_txt.get()))
-    handler_manual_circle_xz.step += 1
+#     print("Circle Result X,Z:{},{}".format(manual_x_entry_txt.get(), manual_z_entry_txt.get()))
+    if len(handler_manual_circle_xz.angles)-1 == handler_manual_circle_xz.step:
+        handler_manual_circle_xz.step = 0;
+    else:
+        handler_manual_circle_xz.step += 1;
     
 def handler_manual_circle_yz():
     if handler_manual_circle_yz.z_entry_text != manual_z_entry_txt.get()\
         or handler_manual_circle_yz.y_entry_text != manual_y_entry_txt.get():
-        manual_y_entry_txt.set(handler_manual_circle_yz.y_entry_text)
-        manual_z_entry_txt.set(handler_manual_circle_yz.z_entry_text)
+        manual_y_entry_txt.set(str(round(float(handler_manual_circle_yz.y_entry_text),3)))
+        manual_z_entry_txt.set(str(round(float(handler_manual_circle_yz.z_entry_text),3)))
         mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     angle = handler_manual_circle_yz.angles[handler_manual_circle_yz.step]
@@ -285,14 +291,17 @@ def handler_manual_circle_yz():
     radian = angle*(2*np.pi/360)
     y_pos = radius*np.cos(radian)
     z_pos = radius*np.sin(radian)
-    manual_y_entry_txt.set(str(y_pos))
-    manual_z_entry_txt.set(str(z_pos))
-    print("Circle Target Y,Z:{},{}".format(manual_y_entry_txt.get(), manual_z_entry_txt.get()))
+    manual_y_entry_txt.set(str(round(y_pos,3)))
+    manual_z_entry_txt.set(str(round(z_pos,3)))
+    print("Step: {} - Circle Target: Y,Z: {},{}".format(handler_manual_circle_yz.step+1, manual_y_entry_txt.get(), manual_z_entry_txt.get()))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 #         time.sleep(30)
-    print("Circle Result Y,Z:{},{}".format(manual_y_entry_txt.get(), manual_z_entry_txt.get()))
-    handler_manual_circle_yz.step += 1
+#     print("Circle Result Y,Z:{},{}".format(manual_y_entry_txt.get(), manual_z_entry_txt.get()))
+    if len(handler_manual_circle_yz.angles)-1 == handler_manual_circle_yz.step:
+        handler_manual_circle_yz.step = 0;
+    else:
+        handler_manual_circle_yz.step += 1;
 
     
 def handler_go_home_x():
@@ -304,19 +313,20 @@ def handler_go_home_y():
     
 def handler_go_home_z():
     mpcnc_home_xyz('z', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
-    manual_z_entry_txt.set(str(20.0))
+    manual_z_entry_txt.set(str(round(20.0,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
     
 def handler_go_home_xyz():
     mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
-    manual_z_entry_txt.set(str(20.0))
+    manual_z_entry_txt.set(str(round(20.0,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
 def handler_set_relative_home():
     mpcnc_home_xyz('set', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
     manual_circle_init_btn.configure(state = 'normal')    
+    start_btn.configure(state = 'normal')   
         
 def handler_submit_values():
     submit_values(submit_val, start_btn, tp_reset_btn, mpcnc_vol_length_entry_txt, mpcnc_vol_width_entry_txt,\
@@ -426,9 +436,10 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     then = time.time()
 
     # initializing some values
-    sampling_x_coordinates = np.arange(0, width, xStep)
-    sampling_z_coordinates = -np.arange(0, depth, zStep)
-    sampling_y_coordinates = np.arange(0, length, yStep)
+    sampling_x_coordinates = np.arange(-width/2, width/2+xStep, xStep)
+    sampling_y_coordinates = np.arange(-length/2, length/2+yStep, yStep)    
+    sampling_z_coordinates = np.arange(-depth/2, depth/2+zStep, zStep)
+    
     s11 = np.array([])
     s12 = np.array([])
     s21 = np.array([])
@@ -439,84 +450,62 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
 
     firstRun = 0;
 
-    numSamples = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
+    num_samples = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
     measurements = {'Run number': [], 'Measurement num': [], 'X Pos': [], 'Y Pos': [], 'Z Pos': [], 
                     'Tilt angle': [], 'Pan angle': [], 'Re[S11]': [], 'Re[S12]': [], 'Re[S21]': [], 'Re[S22]': [],
                     'Im[S11]': [], 'Im[S12]': [], 'Im[S21]': [], 'Im[S22]': []}
     meas_num = 0
 
-    estimatedTime = (PauseDur+1)*numSamples
+    estimatedTime = (PauseDur+1)*num_samples
     print('Estimated time to completion (hours): ' + str(estimatedTime/3600))
 
     f = open(txt_fileName+".txt", "w")
 
     time.sleep(5) # time delay to give the machine time to initialize
-#     vna_data = np.empty(numSamples) #array to hold a value for each sample
+    vna_data = np.empty(num_samples) #array to hold a value for each sample
 
     #initialize VNA
     vna_init(num_points, visa_vna, center_freq, span)
-    speed_default = 10*60 # 10mm/s*60s/1min
-    manual_x_entry_txt.set(str(0))
-    manual_y_entry_txt.set(str(0))
-    manual_z_entry_txt.set(str(0))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
     #3D plots for s12, s11, s21, s22
-#     sPlot=plt.figure(1)
-#     sPlot.tight_layout(pad=3.0)
-#     ax1 = sPlot.add_subplot(221, projection = '3d')
-#     ax1.set_title('S11')
-#     ax1.set_xlabel('X Position (mm)')
-#     ax1.set_ylabel('Y Position (mm)')
-#     ax1.set_zlabel('Z Position (mm)')
-# 
-#     ax2 = sPlot.add_subplot(222, projection = '3d')
-#     ax2.set_title('S12')
-#     ax2.set_xlabel('X Position (mm)')
-#     ax2.set_ylabel('Y Position (mm)')
-#     ax2.set_zlabel('Z Position (mm)')
-#     
-#     ax3 = sPlot.add_subplot(223, projection = '3d')
-#     ax3.set_title('S21')
-#     ax3.set_xlabel('X Position (mm)')
-#     ax3.set_ylabel('Y Position (mm)')
-#     ax3.set_zlabel('Z Position (mm)')
-# 
-#     ax4 = sPlot.add_subplot(224, projection = '3d')
-#     ax4.set_title('S22')
-#     ax4.set_xlabel('X Position (mm)')
-#     ax4.set_ylabel('Y Position (mm)')
-#     ax4.set_zlabel('Z Position (mm)')
-    print("{}".format(sampling_z_coordinates))
-    print("{}".format(sampling_y_coordinates))
-    print("{}".format(sampling_x_coordinates))
+    sPlot=plt.figure(1)
+    sPlot.tight_layout(pad=3.0)
+    ax1 = sPlot.add_subplot(221, projection = '3d')
+    ax1.set_title('S11')
+    ax1.set_xlabel('X Position (mm)')
+    ax1.set_ylabel('Y Position (mm)')
+    ax1.set_zlabel('Z Position (mm)')
+ 
+    ax2 = sPlot.add_subplot(222, projection = '3d')
+    ax2.set_title('S12')
+    ax2.set_xlabel('X Position (mm)')
+    ax2.set_ylabel('Y Position (mm)')
+    ax2.set_zlabel('Z Position (mm)')
+     
+    ax3 = sPlot.add_subplot(223, projection = '3d')
+    ax3.set_title('S21')
+    ax3.set_xlabel('X Position (mm)')
+    ax3.set_ylabel('Y Position (mm)')
+    ax3.set_zlabel('Z Position (mm)')
+ 
+    ax4 = sPlot.add_subplot(224, projection = '3d')
+    ax4.set_title('S22')
+    ax4.set_xlabel('X Position (mm)')
+    ax4.set_ylabel('Y Position (mm)')
+    ax4.set_zlabel('Z Position (mm)')
+    
+    print("x_coords: {}".format(sampling_x_coordinates))
+    print("y_coords: {}".format(sampling_y_coordinates))
+    print("z_coords: {}".format(sampling_z_coordinates))
+    
     y_positive_direction = False
     x_positive_direction = False
-    deg_range = range(60)[::5]                    
-    for tilt_deg in deg_range:
-#                     print("Pos Tilt3 Deg = {}".format(tilt_deg))
-#                     print("Pos Pan Deg = {}".format(tilt_deg))
-        ser_rambo.write(("M280"+" P0"+" S"+str(tilt_deg)).encode()+b'\n') # Roll serial write
-        ser_rambo.write(("M400").encode()+b'\n') # Wait for "Movement Complete" response
-        time.sleep(0.2)
-        ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()+b'\n') # Roll serial write
-        ser_rambo.write(("M400").encode()+b'\n') # Wait for "Movement Complete" response
-        time.sleep(0.2)
-             
-    for tilt_deg in reversed(deg_range):
-#                     print("Neg Pan Deg = {}".format(tilt_deg))
-        ser_rambo.write(("M280"+" P0"+" S"+str(tilt_deg)).encode()+b'\n') # Roll serial write
-        ser_rambo.write(("M400").encode()+b'\n') # Wait for "Movement Complete" response
-        time.sleep(0.5)
-#                     print("Neg Tilt3 Deg = {}".format(tilt_deg))                    
-        ser_rambo.write(("M280"+" P3"+" S"+str(tilt_deg)).encode()+b'\n') # Roll serial write
-        ser_rambo.write(("M400").encode()+b'\n') # Wait for "Movement Complete" response
-        time.sleep(0.5)
-        
+    
     for z_coord in sampling_z_coordinates: # for each z plane 
-        manual_z_entry_txt.set(str(z_coord))
-        print("\nz_coord = {}".format(z_coord))        
+        manual_z_entry_txt.set(str(round(z_coord,3)))
+#         print("\nz_coord = {}".format(z_coord))        
         y_positive_direction = not(y_positive_direction)
 #         print("y_positive_direction = {}".format(y_positive_direction))
         if y_positive_direction == True:
@@ -526,8 +515,8 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
              
         for y_coord in _sampling_y_coordinates: # for each row
             f.write("\n")
-            manual_y_entry_txt.set(str(y_coord))
-            print("\ny_coord = {}".format(y_coord))
+            manual_y_entry_txt.set(str(round(y_coord,3)))
+#             print("\ny_coord = {}".format(y_coord))
             x_positive_direction = not(x_positive_direction)
 #             print("x_positive_direction = {}".format(x_positive_direction))
             if x_positive_direction:
@@ -536,13 +525,12 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 _sampling_x_coordinates = reversed(sampling_x_coordinates)
              
             for x_coord in _sampling_x_coordinates: # moves the tool to each successive sampling spot in the row
-                speed = speed_default*2;
-                manual_x_entry_txt.set(str(x_coord))
-                print("x_coord = {}".format(x_coord))
+                manual_x_entry_txt.set(str(round(x_coord,3)))
+#                 print("x_coord = {}".format(x_coord))
                 mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
                 mpcnc_pause(PauseDur, ser_rambo) 
-                time.sleep(3)
+#                 time.sleep(3)
   
                 value = vna_record(num_points, 's11', visa_vna) #magnitude value
                 value2 = vna_record(num_points, 's12', visa_vna)
@@ -559,30 +547,30 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 s21 = np.concatenate([s21, np.array([value3])])
                 s22 = np.concatenate([s22, np.array([value4])])
                 #plotting 
-#                 if(firstRun != 0):
+                if(firstRun != 0):
 #                     print("maybe remove colorbars first?")
-#                     colorbar1.remove()
-#                     colorbar2.remove()
-#                     colorbar3.remove()
-#                     colorbar4.remove()
+                    colorbar1.remove()
+                    colorbar2.remove()
+                    colorbar3.remove()
+                    colorbar4.remove()
               
-#                 ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11, cmap = 'jet')
-#                 colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
-#                 colorbar1.set_label('Decibels')
-# 
-#                 ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12, cmap = 'jet')
-#                 colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
-#                 colorbar2.set_label('Decibels')
-# 
-#                 ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21, cmap = 'jet')
-#                 colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
-#                 colorbar3.set_label('Decibels')
-#                 
-#                 ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22, cmap = 'jet')
-#                 colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
-#                 colorbar4.set_label('Decibels')    
-  
-#                 plt.pause(0.01)
+                ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11, cmap = 'jet')
+                colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
+                colorbar1.set_label('Decibels')
+ 
+                ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12, cmap = 'jet')
+                colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
+                colorbar2.set_label('Decibels')
+ 
+                ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21, cmap = 'jet')
+                colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
+                colorbar3.set_label('Decibels')
+                 
+                ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22, cmap = 'jet')
+                colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
+                colorbar4.set_label('Decibels')    
+      
+                plt.pause(0.01)
   
                 firstRun += 1
   
@@ -595,16 +583,16 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 # ALSO: might need to update how things are graphed
 
                 # currently run number is always set to 1
-                data['Run number'].append(1)
+                measurements['Run number'].append(1)
 
-                data['Measurement num'].append(meas_num + 1)
-                data['X Pos'].append(x_coord)
-                data['Y Pos'].append(y_coord)
-                data['Z Pos'].append(z_coord)
+                measurements['Measurement num'].append(meas_num + 1)
+                measurements['X Pos'].append(x_coord)
+                measurements['Y Pos'].append(y_coord)
+                measurements['Z Pos'].append(z_coord)
 
                 # taken from tilt and pan textbox entries
-                data['Tilt angle'].append(tilt) 
-                data['Pan angle'].append(pan)
+                measurements['Tilt angle'].append(float(tilt_entry_txt.get())) 
+                measurements['Pan angle'].append(float(pan_entry_txt.get()))
 
                 # s params
                 s11 = np.asarray(s11)
@@ -612,35 +600,38 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 s21 = np.asarray(s21)
                 s22 = np.asarray(s22) 
 
-                data['Re[S11]'].append(s11.real)
-                data['Re[S12]'].append(s12.real)
-                data['Re[S21]'].append(s21.real)
-                data['Re[S22]'].append(s22.real)
+                measurements['Re[S11]'].append(s11.real)
+                measurements['Re[S12]'].append(s12.real)
+                measurements['Re[S21]'].append(s21.real)
+                measurements['Re[S22]'].append(s22.real)
 
-                data['Im[S11]'].append(s11.imag)
-                data['Im[S12]'].append(s12.imag)
-                data['Im[S21]'].append(s21.imag)
-                data['Im[S22]'].append(s22.imag)
+                measurements['Im[S11]'].append(s11.imag)
+                measurements['Im[S12]'].append(s12.imag)
+                measurements['Im[S21]'].append(s21.imag)
+                measurements['Im[S22]'].append(s22.imag)
 
                 # increment 
                 meas_num = meas_num + 1
+                
+                percent_complete = round(100*float(meas_num)/num_samples,2)
+                
+                print("% Complete: {}%".format(percent_complete))
                  
     
-    home_sel = 'x'
-    mpcnc_home_xyz(home_sel, manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
-
-    home_sel = 'y'
-    mpcnc_home_xyz(home_sel, manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
-    
-#     ser_rambo.write(('G0 Z0').encode())
+    manual_x_entry_txt.set(str(round(0,3)))
+    manual_y_entry_txt.set(str(round(0,3)))
+    manual_z_entry_txt.set(str(round(0,3)))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
     # convert measurements to Pandas dataframe
     df = pd.DataFrame(measurements)
 
     # save to csv in current working directory 
     file_path = os.getcwd()
-    df.to_csv(file_path)
-
+    
+    with open(txt_fileName+".csv", "w") as f:
+        df.to_csv(f)
 
     f.close()
     ser_rambo.close()
@@ -674,9 +665,9 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
 #         mpcnc_step_xyz.y_loc = float(y_step)
 #         mpcnc_step_xyz.z_loc = float(z_step)
 #         
-#     manual_x_entry_txt.set(str(mpcnc_step_xyz.x_loc))
-#     manual_y_entry_txt.set(str(mpcnc_step_xyz.y_loc))
-#     manual_z_entry_txt.set(str(mpcnc_step_xyz.z_loc))
+#     manual_x_entry_txt.set(str(round(mpcnc_step_xyz.x_loc,3)))
+#     manual_y_entry_txt.set(str(round(mpcnc_step_xyz.y_loc,3)))
+#     manual_z_entry_txt.set(str(round(mpcnc_step_xyz.z_loc,3)))
 # 
 #     speed_default = 10*60 # 10mm/s*60s/1min
 #     speed = manual_speed;
@@ -708,7 +699,7 @@ manual_tilt_lbl = tk.Label(manual_tp_label_frame, text = "Tilt Angle (-30 to 90d
 manual_tilt_lbl.grid(row = 1, column = 0)
 tilt_entry_txt = tk.StringVar()
 manual_tilt_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=tilt_entry_txt)
-tilt_entry_txt.set("0")
+tilt_entry_txt.set(str(round(0,3)))
 manual_tilt_txt.grid(row = 1, column = 1, padx=(10,10))
 manual_tilt_btn = tk.Button(manual_tp_label_frame, text= 'Send', command = handler_tp_head_tilt)
 manual_tilt_btn.grid(row = 1, column = 2)
@@ -716,7 +707,7 @@ manual_tilt_btn.grid(row = 1, column = 2)
 manual_tilt_step_entry_txt = tk.StringVar()
 manual_tilt_step_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_tilt_step_entry_txt)
 manual_tilt_step_txt.grid(row = 1, column = 3, padx=(10,10))
-manual_tilt_step_entry_txt.set("0")
+manual_tilt_step_entry_txt.set(str(round(0,3)))
 
 manual_tilt_btn_step_pos = tk.Button(manual_tp_label_frame, text= '+', command = handler_tp_head_tilt_step_pos)
 manual_tilt_btn_step_pos.grid(row = 1, column = 4)
@@ -727,7 +718,7 @@ manual_pan_lbl = tk.Label(manual_tp_label_frame, text = "Pan Angle (-90 to 88deg
 manual_pan_lbl.grid(row = 2, column = 0)
 pan_entry_txt = tk.StringVar()
 manual_pan_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=pan_entry_txt)
-pan_entry_txt.set("0")
+pan_entry_txt.set(str(round(0,3)))
 manual_pan_txt.grid(row = 2, column = 1, padx=(10,10))
 manual_pan_btn = tk.Button(manual_tp_label_frame, text= 'Send', command = handler_tp_head_pan)
 manual_pan_btn.grid(row = 2, column = 2)
@@ -737,7 +728,7 @@ manual_pan_btn.grid(row = 2, column = 2)
 manual_pan_step_entry_txt = tk.StringVar()
 manual_pan_step_txt = tk.Entry(manual_tp_label_frame, width = 10, state = 'normal', textvariable=manual_pan_step_entry_txt)
 manual_pan_step_txt.grid(row = 2, column = 3, padx=(10,10))
-manual_pan_step_entry_txt.set("0")
+manual_pan_step_entry_txt.set(str(round(0,3)))
 
 manual_pan_btn_step_pos = tk.Button(manual_tp_label_frame, text= '+', command = handler_tp_head_pan_step_pos)
 manual_pan_btn_step_pos.grid(row = 2, column = 4)
@@ -858,7 +849,7 @@ manual_x_btn.grid(row = 0, column = 2)
 manual_x_step_entry_txt = tk.StringVar()
 manual_x_step_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_x_step_entry_txt)
 manual_x_step_txt.grid(row = 0, column = 3, padx=(10,10))
-manual_x_step_entry_txt.set("0")
+manual_x_step_entry_txt.set(str(round(0,3)))
 
 manual_x_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_pos_x)
 manual_x_step_pos_btn.grid(row = 0, column = 4)
@@ -877,7 +868,7 @@ manual_y_btn.grid(row = 1, column = 2)
 manual_y_step_entry_txt = tk.StringVar()
 manual_y_step_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_y_step_entry_txt)
 manual_y_step_txt.grid(row = 1, column = 3, padx=(10,10))
-manual_y_step_entry_txt.set("0")
+manual_y_step_entry_txt.set(str(round(0,3)))
 
 manual_y_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_pos_y)
 manual_y_step_pos_btn.grid(row = 1, column = 4)
@@ -896,7 +887,7 @@ manual_z_btn.grid(row = 2, column = 2)
 manual_z_step_entry_txt = tk.StringVar()
 manual_z_step_txt = tk.Entry(manual_xyz_label_frame, width = 10, textvariable=manual_z_step_entry_txt)
 manual_z_step_txt.grid(row = 2, column = 3, padx=(10,10))
-manual_z_step_entry_txt.set("0")
+manual_z_step_entry_txt.set(str(round(0,3)))
 
 manual_z_step_pos_btn = tk.Button(manual_xyz_label_frame, text= '+', command = handler_manual_step_pos_z)
 manual_z_step_pos_btn.grid(row = 2, column = 4)
@@ -1034,7 +1025,7 @@ vna_sweep_pts_lbl = tk.Label(mpfcs_setup_frame, text = "# Sweep Points:")
 vna_sweep_pts_lbl.grid(row = 11, column = 0)
 vna_sweep_pts_entry_txt = tk.StringVar()
 vna_sweep_pts_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=vna_sweep_pts_entry_txt)
-vna_sweep_pts_entry_txt.set("11")
+vna_sweep_pts_entry_txt.set("1601")
 vna_sweep_pts_txt.grid(row = 11, column = 1)
 
 # s = ttk.Separator(mpfcs_setup_frame,orient='horizontal')
@@ -1109,18 +1100,16 @@ s21.grid(row = 0, column = 6, padx = 10, pady = 5)
 #initialize the timer
 hours_took = 0
 if DEBUG == False:
-#     manual_x_entry_txt.set(str(0))
-#     manual_y_entry_txt.set(str(0))
-#     manual_z_entry_txt.set(str(0))
-#     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-#                manual_z_entry_txt, manual_speed_entry_txt,\
-#                is_step, ser_rambo)
-    tilt_entry_txt.set("0")
-    pan_entry_txt.set("0")
+    tilt_entry_txt.set(str(round(0,3)))
+    pan_entry_txt.set(str(round(0,3)))
     tp_head_resets(tp_reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo)
     mpcnc_pos_read.m114_output_static = ""
-    ser_rambo.write(("M92 Z2267.72").encode() + b'\n')
-#     mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
+    ser_rambo.write(("M92 Z2267.72").encode() + b'\n') # Setting the Z Tower steps_per_unit
+    
+    center_freq = float(vna_center_freq_entry_txt.get())
+    span = int(vna_span_entry_txt.get())
+    num_points = int(vna_sweep_pts_entry_txt.get())
+    vna_init(num_points, visa_vna, center_freq, span)
 
 ######################### end of code
 
