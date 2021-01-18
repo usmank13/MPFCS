@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import serial
 import time
+import datetime
 import pyvisa as visa
 from tkinter import ttk, messagebox
 import tkinter as tk
@@ -350,27 +351,27 @@ def handler_s11_plt():
     filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, s11, _, _, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    x, y, z, s11_array, _, _, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
     ax1.set_title('S11')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
     ax1.set_zlabel('Z Position (mm)')
-    p = ax1.scatter(x, y, z, c = s11, cmap = 'jet')
+    p = ax1.scatter(x, y, z, c = s11_array, cmap = 'jet')
     colorbar = fig.colorbar(p)
     colorbar.set_label('Decibels')
     plt.show()
     
 def handler_s12_plt():
     filename_input = file_entry_txt.get()
-    # s12.configure(state = 'disabled')
+    # s12_btn.configure(state = 'disabled')
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, _, s12, _, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    x, y, z, _, s12_array, _, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
     ax1.set_title('S12')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
     ax1.set_zlabel('Z Position (mm)')
-    p = ax1.scatter(x, y, z, c = s12, cmap = 'jet')
+    p = ax1.scatter(x, y, z, c = s12_array, cmap = 'jet')
     colorbar = fig.colorbar(p)
     colorbar.set_label('Decibels')
     plt.show()
@@ -379,12 +380,12 @@ def handler_s22_plt():
     filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, _, _, _, s22 = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    x, y, z, _, _, _, s22_array = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
     ax1.set_title('S22')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
     ax1.set_zlabel('Z Position (mm)')
-    p = ax1.scatter(x, y, z, c = s22, cmap = 'jet')
+    p = ax1.scatter(x, y, z, c = s22_array, cmap = 'jet')
     colorbar = fig.colorbar(p)
     colorbar.set_label('Decibels')
     plt.show()
@@ -393,12 +394,12 @@ def handler_s21_plt():
     filename_input = file_entry_txt.get()
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
-    x, y, z, _, _, s21, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
+    x, y, z, _, _, s21_array, _ = np.loadtxt(filename_input + '.txt', delimiter = ",", unpack = True) 
     ax1.set_title('S21')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
     ax1.set_zlabel('Z Position (mm)')
-    p = ax1.scatter(x, y, z, c = s21, cmap = 'jet')
+    p = ax1.scatter(x, y, z, c = s21_array, cmap = 'jet')
     colorbar = fig.colorbar(p)
     colorbar.set_label('Decibels')
     plt.show()
@@ -418,58 +419,79 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
               filename_entry_txt, mpfcs_setup_frame):
     reset_VNA.configure(state = 'disabled')
     start_btn.configure(state = 'disabled')
+    
+    run_num = 0
+    
     #getting user inputs
-    length = int(mpcnc_vol_length_entry_txt.get())
-    print("Length: " + str(length))
-    width = int(mpcnc_vol_width_entry_txt.get())
-    print("Width: " + str(width))
-    PauseDur = int(mpcnc_dwell_duration_entry_txt.get())
-    xStep = int(mpcnc_x_step_size_entry_txt.get())
-    yStep = int(mpcnc_y_step_size_entry_txt.get())
-    depth = int(mpcnc_vol_height_entry_txt.get())
-    print("Height: " + str(depth))
-    center_freq = float(vna_center_freq_entry_txt.get())
-    span = int(vna_span_entry_txt.get())
-    num_points = int(vna_sweep_pts_entry_txt.get())
-    zStep = int(mpcnc_z_step_size_entry_txt.get())
-    txt_fileName = filename_entry_txt.get()
+    vol_length = int(mpcnc_vol_length_entry_txt.get())
+    print("Length: " + str(vol_length))
+    vol_x_step = int(mpcnc_x_step_size_entry_txt.get())
+    
+    vol_width = int(mpcnc_vol_width_entry_txt.get())
+    print("Width: " + str(vol_width))
+    vol_y_step = int(mpcnc_y_step_size_entry_txt.get())
+       
+    vol_height = int(mpcnc_vol_height_entry_txt.get())
+    print("Height: " + str(vol_height))
+    vol_z_step = int(mpcnc_z_step_size_entry_txt.get())
+    
+    mpcnc_pause_dur = int(mpcnc_dwell_duration_entry_txt.get())
+    
+    vna_center_freq = float(vna_center_freq_entry_txt.get())
+    vna_span = int(vna_span_entry_txt.get())
+    vna_num_points = int(vna_sweep_pts_entry_txt.get())
+    
+#     txt_fileName = filename_entry_txt.get()
+    
     then = time.time()
 
     # initializing some values
-    sampling_x_coordinates = np.arange(-width/2, width/2+xStep, xStep)
-    sampling_y_coordinates = np.arange(-length/2, length/2+yStep, yStep)    
-    sampling_z_coordinates = np.arange(-depth/2, depth/2+zStep, zStep)
+    sampling_x_coordinates = np.arange(-vol_width/2, vol_width/2+vol_x_step, vol_x_step)
+    sampling_y_coordinates = np.arange(-vol_length/2, vol_length/2+vol_y_step, vol_y_step)    
+    sampling_z_coordinates = np.arange(-vol_height/2, vol_height/2+vol_z_step, vol_z_step)
     
-    s11 = np.array([])
-    s12 = np.array([])
-    s21 = np.array([])
-    s22 = np.array([])
+    s11_array = np.array([])
+    s12_array = np.array([])
+    s21_array = np.array([])
+    s22_array = np.array([])
     x_coords = np.array([])
     y_coords = np.array([])
     z_coords = np.array([])
+    
+    # data_array_dimensions: 
+    #    [Run #][Measurement #]
+    #    [X Pos][Y Pos][Z Pos]
+    #    [Tilt Angle (deg)][Pan Angle (deg)]
+    #    [Center Frequency]
+    #    [S11], Re[S11], Im[S11]
+    #    [S12], Re[S12], Im[S12]
+    #    [S21], Re[S21], Im[S21]
+    #    [S22], Re[S22], Im[S22]
+    data_rec = float(np.zeros((len(sampling_x_coordinates),len(sampling_y_coordinates),len(sampling_z_coordinates),20)))
 
     firstRun = 0;
 
-    num_samples = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
+    num_meas = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
     measurements = {'Run number': [], 'Measurement num': [], 'X Pos': [], 'Y Pos': [], 'Z Pos': [], 
-                    'Tilt angle': [], 'Pan angle': [], 'Re[S11]': [], 'Re[S12]': [], 'Re[S21]': [], 'Re[S22]': [],
+                    'Tilt angle': [], 'Pan angle': [], 'S11_LOGM':[], 'S12_LOGM':[], 'S21_LOGM':[], 'S22_LOGM':[],
+                    'Re[S11]': [], 'Re[S12]': [], 'Re[S21]': [], 'Re[S22]': [],
                     'Im[S11]': [], 'Im[S12]': [], 'Im[S21]': [], 'Im[S22]': []}
-    meas_num = 0
+    meas_count = 0
 
-    estimatedTime = (PauseDur+1)*num_samples
+    estimatedTime = (mpcnc_pause_dur+1)*num_meas
     print('Estimated time to completion (hours): ' + str(estimatedTime/3600))
 
-    f = open(txt_fileName+".txt", "w")
+#     f = open(txt_fileName+".txt", "w")
 
     time.sleep(5) # time delay to give the machine time to initialize
-    vna_data = np.empty(num_samples) #array to hold a value for each sample
+    vna_data = np.empty(num_meas) #array to hold a value for each sample
 
     #initialize VNA
-    vna_init(num_points, visa_vna, center_freq, span)
+    vna_init(vna_num_points, visa_vna, vna_center_freq, vna_span)
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
-    #3D plots for s12, s11, s21, s22
+    #3D plots for S11, S12, S21, S22
     sPlot=plt.figure(1)
     sPlot.tight_layout(pad=3.0)
     ax1 = sPlot.add_subplot(221, projection = '3d')
@@ -477,33 +499,97 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
     ax1.set_zlabel('Z Position (mm)')
+    ax1.view_init(elev=30, azim=90)
  
     ax2 = sPlot.add_subplot(222, projection = '3d')
     ax2.set_title('S12')
     ax2.set_xlabel('X Position (mm)')
     ax2.set_ylabel('Y Position (mm)')
     ax2.set_zlabel('Z Position (mm)')
+    ax2.view_init(elev=30, azim=90)
      
     ax3 = sPlot.add_subplot(223, projection = '3d')
     ax3.set_title('S21')
     ax3.set_xlabel('X Position (mm)')
     ax3.set_ylabel('Y Position (mm)')
     ax3.set_zlabel('Z Position (mm)')
+    ax3.view_init(elev=30, azim=90)
  
     ax4 = sPlot.add_subplot(224, projection = '3d')
     ax4.set_title('S22')
     ax4.set_xlabel('X Position (mm)')
     ax4.set_ylabel('Y Position (mm)')
     ax4.set_zlabel('Z Position (mm)')
+    ax4.view_init(elev=30, azim=90)
     
-    print("x_coords: {}".format(sampling_x_coordinates))
-    print("y_coords: {}".format(sampling_y_coordinates))
-    print("z_coords: {}".format(sampling_z_coordinates))
+#     print("x_coords: {}".format(sampling_x_coordinates))
+#     print("y_coords: {}".format(sampling_y_coordinates))
+#     print("z_coords: {}".format(sampling_z_coordinates))
+
+    # Safety extent sweep and plot extent setup
+    z_extent_array = [sampling_z_coordinates[0], sampling_z_coordinates[-1]]
+    y_extent_array = [sampling_y_coordinates[0], sampling_y_coordinates[-1]]
+    x_extent_array = [sampling_x_coordinates[0], sampling_x_coordinates[-1]]
+
+    for z_count, z_coord in enum(z_extent_array): # for each z plane 
+            manual_z_entry_txt.set(str(round(z_coord,3)))                
+            for _y_count, y_coord in enum(y_extent_array): # for each row
+                manual_y_entry_txt.set(str(round(y_coord,3)))
+                for _x_count, x_coord in enum(x_extent_array): # moves the tool to each successive sampling spot in the row
+                    manual_x_entry_txt.set(str(round(x_coord,3)))
+                    
+                    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                       manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+                    mpcnc_pause(mpcnc_pause_dur, ser_rambo)
+      
+                    s11_logm = vna_record(vna_num_points, 'S11', 'LOGM', visa_vna) #magnitude value
+                    s12_logm = vna_record(vna_num_points, 'S12', 'LOGM', visa_vna)
+                    s21_logm = vna_record(vna_num_points, 'S21', 'LOGM', visa_vna)
+                    s22_logm = vna_record(vna_num_points, 'S22', 'LOGM', visa_vna)
+                    
+                    s11_re, s11_im = vna_record(vna_num_points, 'S11', 'SMIMRI', visa_vna) #magnitude value
+                    s12_re, s12_im = vna_record(vna_num_points, 'S12', 'SMIMRI', visa_vna)
+                    s21_re, s21_im = vna_record(vna_num_points, 'S21', 'SMIMRI', visa_vna)
+                    s22_re, s22_im = vna_record(vna_num_points, 'S22', 'SMIMRI', visa_vna)
+                    
+                    x_coords = np.concatenate([x_coords, np.array([x_coord])])
+                    y_coords = np.concatenate([y_coords, np.array([y_coord])])
+                    z_coords = np.concatenate([z_coords, np.array([z_coord])])
+      
+                    s11_array = np.concatenate([s11_array, np.array([s11_logm])])
+                    s12_array = np.concatenate([s12_array, np.array([s12_logm])])
+                    s21_array = np.concatenate([s21_array, np.array([s21_logm])])
+                    s22_array = np.concatenate([s22_array, np.array([s22_logm])])
+                    #plotting 
+#                     if(meas_count != 0):
+#     #                     print("maybe remove colorbars first?")
+#                         colorbar1.remove()
+#                         colorbar2.remove()
+#                         colorbar3.remove()
+#                         colorbar4.remove()
+                  
+                    ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
+                    colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
+                    colorbar1.set_label('Decibels')
+     
+                    ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
+                    colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
+                    colorbar2.set_label('Decibels')
+     
+                    ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
+                    colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
+                    colorbar3.set_label('Decibels')
+                     
+                    ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet')
+                    colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
+                    colorbar4.set_label('Decibels')    
+          
+                    plt.pause(0.01)
     
     y_positive_direction = False
     x_positive_direction = False
     
-    for z_coord in sampling_z_coordinates: # for each z plane 
+    for z_count, z_coord in enum(sampling_z_coordinates): # for each z plane 
         manual_z_entry_txt.set(str(round(z_coord,3)))
 #         print("\nz_coord = {}".format(z_coord))        
         y_positive_direction = not(y_positive_direction)
@@ -513,9 +599,15 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
         else:
             _sampling_y_coordinates = reversed(sampling_y_coordinates)
              
-        for y_coord in _sampling_y_coordinates: # for each row
-            f.write("\n")
+        for _y_count, y_coord in enum(_sampling_y_coordinates): # for each row
+#             f.write("\n")
             manual_y_entry_txt.set(str(round(y_coord,3)))
+            
+            if y_positive_direction:
+                y_count = _y_count
+            else:
+                y_count = len(_sampling_x_coordinates)-_y_count-1
+        
 #             print("\ny_coord = {}".format(y_coord))
             x_positive_direction = not(x_positive_direction)
 #             print("x_positive_direction = {}".format(x_positive_direction))
@@ -524,59 +616,88 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
             else:
                 _sampling_x_coordinates = reversed(sampling_x_coordinates)
              
-            for x_coord in _sampling_x_coordinates: # moves the tool to each successive sampling spot in the row
+            for _x_count, x_coord in enum(_sampling_x_coordinates): # moves the tool to each successive sampling spot in the row
                 manual_x_entry_txt.set(str(round(x_coord,3)))
 #                 print("x_coord = {}".format(x_coord))
                 mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                    manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
-                mpcnc_pause(PauseDur, ser_rambo) 
+                mpcnc_pause(mpcnc_pause_dur, ser_rambo) 
 #                 time.sleep(3)
   
-                value = vna_record(num_points, 's11', visa_vna) #magnitude value
-                value2 = vna_record(num_points, 's12', visa_vna)
-                value3 = vna_record(num_points, 's21', visa_vna)
-                value4 = vna_record(num_points, 's22', visa_vna)
+                s11_logm = vna_record(vna_num_points, 'S11', 'LOGM', visa_vna) #magnitude value
+                s12_logm = vna_record(vna_num_points, 'S12', 'LOGM', visa_vna)
+                s21_logm = vna_record(vna_num_points, 'S21', 'LOGM', visa_vna)
+                s22_logm = vna_record(vna_num_points, 'S22', 'LOGM', visa_vna)
+                
+                s11_re, s11_im = vna_record(vna_num_points, 'S11', 'SMIMRI', visa_vna) #magnitude value
+                s12_re, s12_im = vna_record(vna_num_points, 'S12', 'SMIMRI', visa_vna)
+                s21_re, s21_im = vna_record(vna_num_points, 'S21', 'SMIMRI', visa_vna)
+                s22_re, s22_im = vna_record(vna_num_points, 'S22', 'SMIMRI', visa_vna)
                   
-#                 print("s11: ", value, "\ns12: ", value2, "\ns21: ", value3, "\ns22: ", value4, "\n\n")
+                if x_positive_direction:
+                    x_count = _x_count
+                else:
+                    x_count = len(_sampling_x_coordinates)-_x_count-1
+#                 print("S11: ", value, "\nS12: ", value2, "\nS21: ", value3, "\nS22: ", value4, "\n\n")
+                
+                data_rec[x_count, y_count, z_count, 0] = run_num
+                data_rec[x_count, y_count, z_count, 1] = meas_count
+                data_rec[x_count, y_count, z_count, 2] = x_coord
+                data_rec[x_count, y_count, z_count, 3] = y_coord
+                data_rec[x_count, y_count, z_count, 4] = z_coord
+                data_rec[x_count, y_count, z_count, 5] = float(tilt_entry_txt.get())
+                data_rec[x_count, y_count, z_count, 6] = float(pan_entry_txt.get())
+                data_rec[x_count, y_count, z_count, 7] = vna_center_freq
+                data_rec[x_count, y_count, z_count, 8] = s11_logm
+                data_rec[x_count, y_count, z_count, 9] = s11_re
+                data_rec[x_count, y_count, z_count, 10] = s11_im
+                data_rec[x_count, y_count, z_count, 11] = s12_logm
+                data_rec[x_count, y_count, z_count, 12] = s12_re
+                data_rec[x_count, y_count, z_count, 13] = s12_im
+                data_rec[x_count, y_count, z_count, 14] = s21_logm
+                data_rec[x_count, y_count, z_count, 15] = s21_re
+                data_rec[x_count, y_count, z_count, 16] = s21_im
+                data_rec[x_count, y_count, z_count, 17] = s22_logm
+                data_rec[x_count, y_count, z_count, 18] = s22_re
+                data_rec[x_count, y_count, z_count, 19] = s22_im
+                
                 x_coords = np.concatenate([x_coords, np.array([x_coord])])
                 y_coords = np.concatenate([y_coords, np.array([y_coord])])
                 z_coords = np.concatenate([z_coords, np.array([z_coord])])
   
-                s11 = np.concatenate([s11, np.array([value])])
-                s12 = np.concatenate([s12, np.array([value2])])
-                s21 = np.concatenate([s21, np.array([value3])])
-                s22 = np.concatenate([s22, np.array([value4])])
+                s11_array = np.concatenate([s11_array, np.array([s11_logm])])
+                s12_array = np.concatenate([s12_array, np.array([s12_logm])])
+                s21_array = np.concatenate([s21_array, np.array([s21_logm])])
+                s22_array = np.concatenate([s22_array, np.array([s22_logm])])
                 #plotting 
-                if(firstRun != 0):
-#                     print("maybe remove colorbars first?")
-                    colorbar1.remove()
-                    colorbar2.remove()
-                    colorbar3.remove()
-                    colorbar4.remove()
+#                 if(meas_count != 0):
+# #                     print("maybe remove colorbars first?")
+#                     colorbar1.remove()
+#                     colorbar2.remove()
+#                     colorbar3.remove()
+#                     colorbar4.remove()
               
-                ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11, cmap = 'jet')
+                ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
                 colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
                 colorbar1.set_label('Decibels')
  
-                ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12, cmap = 'jet')
+                ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
                 colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
                 colorbar2.set_label('Decibels')
  
-                ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21, cmap = 'jet')
+                ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
                 colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
                 colorbar3.set_label('Decibels')
                  
-                ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22, cmap = 'jet')
+                ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet')
                 colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
                 colorbar4.set_label('Decibels')    
       
                 plt.pause(0.01)
   
-                firstRun += 1
-  
-                f.write(str(x_coord) + "," + str(y_coord) + "," + str(z_coord) + "," + str(value))
-                f.write("," + str(value2) + "," + str(value3) + "," + str(value4)) 
-                f.write("\n")
+#                 f.write(str(x_coord) + "," + str(y_coord) + "," + str(z_coord) + "," + str(value))
+#                 f.write("," + str(value2) + "," + str(value3) + "," + str(value4)) 
+#                 f.write("\n")
 
                 # NOTE: need to fix the variable names here after we 
                 # revert back the changes we made for testing/debugging 
@@ -585,7 +706,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 # currently run number is always set to 1
                 measurements['Run number'].append(1)
 
-                measurements['Measurement num'].append(meas_num + 1)
+                measurements['Measurement num'].append(meas_count + 1)
                 measurements['X Pos'].append(x_coord)
                 measurements['Y Pos'].append(y_coord)
                 measurements['Z Pos'].append(z_coord)
@@ -593,29 +714,35 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 # taken from tilt and pan textbox entries
                 measurements['Tilt angle'].append(float(tilt_entry_txt.get())) 
                 measurements['Pan angle'].append(float(pan_entry_txt.get()))
+                
+                measurements['S11_LOGM'].append(s11_logm)
+                measurements['S12_LOGM'].append(s12_logm)
+                measurements['S21_LOGM'].append(s21_logm)
+                measurements['S22_LOGM'].append(s22_logm)
 
-                # s params
-                s11 = np.asarray(s11)
-                s12 = np.asarray(s12)
-                s21 = np.asarray(s21)
-                s22 = np.asarray(s22) 
-
-                measurements['Re[S11]'].append(s11.real)
-                measurements['Re[S12]'].append(s12.real)
-                measurements['Re[S21]'].append(s21.real)
-                measurements['Re[S22]'].append(s22.real)
-
-                measurements['Im[S11]'].append(s11.imag)
-                measurements['Im[S12]'].append(s12.imag)
-                measurements['Im[S21]'].append(s21.imag)
-                measurements['Im[S22]'].append(s22.imag)
+                measurements['Re[S11]'].append(s11_re)
+                measurements['Re[S12]'].append(s12_re)
+                measurements['Re[S21]'].append(s21_re)
+                measurements['Re[S22]'].append(s22_re)
+                
+                measurements['Im[S11]'].append(s11_im)
+                measurements['Im[S12]'].append(s12_im)
+                measurements['Im[S21]'].append(s21_im)
+                measurements['Im[S22]'].append(s22_im)
 
                 # increment 
-                meas_num = meas_num + 1
+                meas_count += 1
                 
-                percent_complete = round(100*float(meas_num)/num_samples,2)
+                percent_complete = round(100*float(meas_count)/num_meas,2)
                 
-                print("% Complete: {}%".format(percent_complete))
+                now = time.time()
+                duration_took = now-then
+                time_per_meas = duration_took/meas_count
+                time_remaining = (num_meas-meas_count)*time_per_meas
+                hrs_mins_secs_remaining = datetime.timedelta(0, time_remaining)
+                 
+                print("% Complete: {}%| Time Remaining: {}".format(percent_complete, hrs_mins_secs_remaining))
+                #ToDo: Running average of time to completion
                  
     
     manual_x_entry_txt.set(str(round(0,3)))
@@ -624,25 +751,26 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
+    pd.DataFrame(data_rec).to_csv(txt_fileName+".csv")
+    
+    
     # convert measurements to Pandas dataframe
     df = pd.DataFrame(measurements)
 
     # save to csv in current working directory 
     file_path = os.getcwd()
     
-    with open(txt_fileName+".csv", "w") as f:
+    with open(txt_fileName+"_df.csv", "w") as f:
         df.to_csv(f)
 
-    f.close()
+        
+#     f.close()
     ser_rambo.close()
-
-    #f = open("coord-data7.txt", "r")
-    #print(f.read())
 
     now = time.time()
     duration_took = now-then
-    hours_took = duration_took / 3600
-    print("Time: ", hours_took, " Hr.")
+    hrs_mins_secs_remaining = datetime.timedelta(0, duration_took)
+    print("Total Time: {}".format(hrs_mins_secs_remaining))
 
     time_disp = tk.Label(mpfcs_setup_frame, text = hours_took, font = 'Helvetica 18 bold' )
     time_disp.grid( row = 15, column = 1, pady = 10, padx = 10)
@@ -969,7 +1097,7 @@ mpcnc_vol_width_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc
 mpcnc_vol_width_entry_txt.set("30")
 mpcnc_vol_width_txt.grid(row = 2, column = 1)
 
-mpcnc_vol_height_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Height (mm):") # used to be called depth
+mpcnc_vol_height_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Height (mm):")
 mpcnc_vol_height_lbl.grid(row = 3, column = 0)
 mpcnc_vol_height_entry_txt = tk.StringVar()
 mpcnc_vol_height_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_vol_height_entry_txt)
@@ -1085,17 +1213,17 @@ btnSend.grid(row = 0, column = 2, padx = 10, pady = 5)
 btnSend = tk.Button(graph_tab_label_frame, text = 'Reset', command = handler_reset_graph, state = 'normal', bg = 'red', fg = 'black')
 btnSend.grid(row = 0, column = 3, padx = 10, pady = 5)
 
-s11 = tk.Button(Parameters, text= 'S11', command = handler_s11_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
-s11.grid(row = 0, column = 0, padx = 10, pady = 5)
+s11_btn = tk.Button(Parameters, text= 'S11', command = handler_s11_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s11_btn.grid(row = 0, column = 0, padx = 10, pady = 5)
 
-s12 = tk.Button(Parameters, text= 'S12', command = handler_s12_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
-s12.grid(row = 0, column = 2, padx = 10, pady = 5)
+s12_btn = tk.Button(Parameters, text= 'S12', command = handler_s12_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s12_btn.grid(row = 0, column = 2, padx = 10, pady = 5)
 
-s22 = tk.Button(Parameters, text= 'S22', command = handler_s22_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
-s22.grid(row = 0, column = 4, padx = 10, pady = 5)
+s22_btn = tk.Button(Parameters, text= 'S22', command = handler_s22_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s22_btn.grid(row = 0, column = 4, padx = 10, pady = 5)
 
-s21 = tk.Button(Parameters, text= 'S21', command = handler_s21_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
-s21.grid(row = 0, column = 6, padx = 10, pady = 5)
+s21_btn = tk.Button(Parameters, text= 'S21', command = handler_s21_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
+s21_btn.grid(row = 0, column = 6, padx = 10, pady = 5)
 
 #initialize the timer
 hours_took = 0
@@ -1106,10 +1234,10 @@ if DEBUG == False:
     mpcnc_pos_read.m114_output_static = ""
     ser_rambo.write(("M92 Z2267.72").encode() + b'\n') # Setting the Z Tower steps_per_unit
     
-    center_freq = float(vna_center_freq_entry_txt.get())
-    span = int(vna_span_entry_txt.get())
-    num_points = int(vna_sweep_pts_entry_txt.get())
-    vna_init(num_points, visa_vna, center_freq, span)
+    vna_center_freq = float(vna_center_freq_entry_txt.get())
+    vna_span = int(vna_span_entry_txt.get())
+    vna_num_points = int(vna_sweep_pts_entry_txt.get())
+    vna_init(vna_num_points, visa_vna, vna_center_freq, vna_span)
 
 ######################### end of code
 

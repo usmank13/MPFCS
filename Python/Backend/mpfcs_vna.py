@@ -42,14 +42,14 @@ def vna_init(num_points, visa_vna, centerF, span): # add some more calibration f
 @brief Measures and returns the current S-Parameter data the VNA is reading
 
 @param[in] num_points: Number of points for the VNA measurement, usually 801 or 1601 (VNA's convention)
-@param[in] sParam: the S-Parameter to measure (given as a string in the following format, e.g. 'S21')
+@param[in] s_param: the S-Parameter to measure (given as a string in the following format, e.g. 'S21')
 @param[in] visa_vna: VNA object (see pyvisa)
 
 @param[out] data_arr: Returns the S Parameter data
 """
-def vna_record(num_points, sParam, visa_vna):  # step length is passed to find the correct element
-    visa_vna.write(sParam +';')
-    visa_vna.write('LOGM')    
+def vna_record(num_points, s_param, measurement_format, visa_vna):  # step length is passed to find the correct element
+    visa_vna.write(s_param +';')
+    visa_vna.write(measurement_format)    
     visa_vna.write('mark1')
     visa_vna.write('markbuck' + str(int((num_points-1) / 2))) # selects the point at the center frequency. 
         # Perhaps I should let the user select which frequency they want to check 
@@ -59,7 +59,7 @@ def vna_record(num_points, sParam, visa_vna):  # step length is passed to find t
     
 #     visa_vna.write('FORM4')
 #     data2 = visa_vna.query('outpdata')
-#     print("\n\n{}-----------------".format(sParam))
+#     print("\n\n{}-----------------".format(s_param))
 #     print(data_arr)
     
 #     print('\nSMIMLOG')
@@ -95,8 +95,11 @@ def vna_record(num_points, sParam, visa_vna):  # step length is passed to find t
 #     print("Outpform = {}".format(data3))
 # !!! ooutpforf seems to work!!!
 #     data4 = visa_vna.query('outpforf')
-#     print("{} - Outpforf = {}".format(sParam, data4))
-    return data_arr[0]
+#     print("{} - Outpforf = {}".format(s_param, data4))
+    if measurement_format == 'LOGM':
+        return data_arr[0]
+    elif measurement_format == 'SMIMRI':
+        return data_arr[0], data_arr[1]
 #     return data4 # might return another val as well for the center freq
 
 
