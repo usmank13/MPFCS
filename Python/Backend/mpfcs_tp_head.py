@@ -98,7 +98,7 @@ def tp_head_pan(pan_entry_txt, ser_rambo):
 """
 def tp_head_resets(reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo):
     reset_btn.configure(state = 'disabled')
-    deg_p_m_90 = -90
+    deg_p_m_90 = 88
     servo_input_usec = tp_deg_2_usecs(deg_p_m_90, PAN_SERVO)
     ser_rambo.write(("M280"+" P3"+" S"+str(servo_input_usec)).encode() + b'\n') # Pan serial write
 #     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response

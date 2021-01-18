@@ -125,7 +125,7 @@ def handler_manual_step_pos_x():
         
     manual_x_entry_txt.set(str(round(float(manual_x_entry_txt.get()) + manual_x_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     
 def handler_manual_step_neg_x():
     if manual_x_step_entry_txt.get() == '0':
@@ -135,7 +135,7 @@ def handler_manual_step_neg_x():
         
     manual_x_entry_txt.set(str(round(float(manual_x_entry_txt.get()) + manual_x_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     
 def handler_manual_step_pos_y():
     if manual_y_step_entry_txt.get() == '0':
@@ -145,7 +145,7 @@ def handler_manual_step_pos_y():
         
     manual_y_entry_txt.set(str(round(float(manual_y_entry_txt.get()) + manual_y_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     
 def handler_manual_step_neg_y():
     if manual_y_step_entry_txt.get() == '0':
@@ -155,7 +155,7 @@ def handler_manual_step_neg_y():
         
     manual_y_entry_txt.set(str(round(float(manual_y_entry_txt.get()) + manual_y_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
 
 def handler_manual_step_pos_z():
     if manual_z_step_entry_txt.get() == '0':
@@ -165,7 +165,7 @@ def handler_manual_step_pos_z():
         
     manual_z_entry_txt.set(str(round(float(manual_z_entry_txt.get()) + manual_z_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     
 def handler_manual_step_neg_z():
     if manual_z_step_entry_txt.get() == '0':
@@ -175,11 +175,11 @@ def handler_manual_step_neg_z():
         
     manual_z_entry_txt.set(str(round(float(manual_z_entry_txt.get()) + manual_z_step,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     
 def handler_manual_loc():
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
 
 # def handler_manual_step_loc_switch():
 #     if manual_loc_edit.get() == 0:
@@ -202,7 +202,7 @@ def handler_manual_reset():
     manual_y_entry_txt.set(str(round(0,3)))
     manual_z_entry_txt.set(str(round(0,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     
 def handler_manual_circle_init():
     radius = float(manual_radius_entry_txt.get())
@@ -238,7 +238,7 @@ def handler_manual_circle_xy():
         manual_x_entry_txt.set(str(round(float(handler_manual_circle_xy.x_entry_text),3)))
         manual_y_entry_txt.set(str(round(float(handler_manual_circle_xy.y_entry_text),3)))
         mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     angle = handler_manual_circle_xy.angles[handler_manual_circle_xy.step]
     radius = float(manual_radius_entry_txt.get())    
     radian = angle*(2*np.pi/360)
@@ -248,7 +248,7 @@ def handler_manual_circle_xy():
     manual_y_entry_txt.set(str(round(y_pos,3)))
     print("Step: {} - Circle Target X,Y: {},{}".format(handler_manual_circle_xy.step+1, manual_x_entry_txt.get(), manual_y_entry_txt.get()))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
 #         time.sleep(30)
 #     print("Circle Result X,Y:{},{}".format(manual_x_entry_txt.get(), manual_y_entry_txt.get()))
     if len(handler_manual_circle_xy.angles)-1 == handler_manual_circle_xy.step:
@@ -262,7 +262,7 @@ def handler_manual_circle_xz():
         manual_x_entry_txt.set(str(round(float(handler_manual_circle_xz.x_entry_text),3)))
         manual_z_entry_txt.set(str(round(float(handler_manual_circle_xz.z_entry_text),3)))
         mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     angle = handler_manual_circle_xz.angles[handler_manual_circle_xz.step]
     radius = float(manual_radius_entry_txt.get())    
     radian = angle*(2*np.pi/360)
@@ -272,7 +272,7 @@ def handler_manual_circle_xz():
     manual_z_entry_txt.set(str(round(z_pos,3)))
     print("Step: {} - Circle Target X,Z: {},{}".format(handler_manual_circle_xz.step+1, manual_x_entry_txt.get(), manual_z_entry_txt.get()))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
 #         time.sleep(30)
 #     print("Circle Result X,Z:{},{}".format(manual_x_entry_txt.get(), manual_z_entry_txt.get()))
     if len(handler_manual_circle_xz.angles)-1 == handler_manual_circle_xz.step:
@@ -286,7 +286,7 @@ def handler_manual_circle_yz():
         manual_y_entry_txt.set(str(round(float(handler_manual_circle_yz.y_entry_text),3)))
         manual_z_entry_txt.set(str(round(float(handler_manual_circle_yz.z_entry_text),3)))
         mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     angle = handler_manual_circle_yz.angles[handler_manual_circle_yz.step]
     radius = float(manual_radius_entry_txt.get())    
     radian = angle*(2*np.pi/360)
@@ -296,7 +296,7 @@ def handler_manual_circle_yz():
     manual_z_entry_txt.set(str(round(z_pos,3)))
     print("Step: {} - Circle Target: Y,Z: {},{}".format(handler_manual_circle_yz.step+1, manual_y_entry_txt.get(), manual_z_entry_txt.get()))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
 #         time.sleep(30)
 #     print("Circle Result Y,Z:{},{}".format(manual_y_entry_txt.get(), manual_z_entry_txt.get()))
     if len(handler_manual_circle_yz.angles)-1 == handler_manual_circle_yz.step:
@@ -316,13 +316,13 @@ def handler_go_home_z():
     mpcnc_home_xyz('z', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
     manual_z_entry_txt.set(str(round(20.0,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     
 def handler_go_home_xyz():
     mpcnc_home_xyz('xyz', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
     manual_z_entry_txt.set(str(round(20.0,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
 
 def handler_set_relative_home():
     mpcnc_home_xyz('set', manual_speed_entry_txt, manual_x_entry_txt, manual_y_entry_txt, manual_z_entry_txt, ser_rambo)
@@ -419,7 +419,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
               filename_entry_txt, mpfcs_setup_frame):
     reset_VNA.configure(state = 'disabled')
     start_btn.configure(state = 'disabled')
-    
+    scan_running = False
     run_num = 0
     
     #getting user inputs
@@ -435,7 +435,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     print("Height: " + str(vol_height))
     vol_z_step = int(mpcnc_z_step_size_entry_txt.get())
     
-    mpcnc_pause_dur = int(mpcnc_dwell_duration_entry_txt.get())
+    mpcnc_pause_dur = float(mpcnc_dwell_duration_entry_txt.get())
     
     vna_center_freq = float(vna_center_freq_entry_txt.get())
     vna_span = int(vna_span_entry_txt.get())
@@ -446,8 +446,8 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     then = time.time()
 
     # initializing some values
-    sampling_x_coordinates = np.arange(-vol_width/2, vol_width/2+vol_x_step, vol_x_step)
-    sampling_y_coordinates = np.arange(-vol_length/2, vol_length/2+vol_y_step, vol_y_step)    
+    sampling_x_coordinates = np.arange(-vol_length/2, vol_length/2+vol_x_step, vol_x_step)
+    sampling_y_coordinates = np.arange(-vol_width/2, vol_width/2+vol_y_step, vol_y_step)    
     sampling_z_coordinates = np.arange(-vol_height/2, vol_height/2+vol_z_step, vol_z_step)
     
     s11_array = np.array([])
@@ -467,7 +467,8 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     #    [S12], Re[S12], Im[S12]
     #    [S21], Re[S21], Im[S21]
     #    [S22], Re[S22], Im[S22]
-    data_rec = float(np.zeros((len(sampling_x_coordinates),len(sampling_y_coordinates),len(sampling_z_coordinates),20)))
+    data_rec = np.zeros((len(sampling_x_coordinates),len(sampling_y_coordinates),len(sampling_z_coordinates),20),dtype=np.float32)
+    print("Data Shape: {}| Memory Footprint: {}kB".format(np.shape(data_rec), round(float(data_rec.size*data_rec.itemsize)/1024), 3))
 
     firstRun = 0;
 
@@ -476,70 +477,70 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                     'Tilt angle': [], 'Pan angle': [], 'S11_LOGM':[], 'S12_LOGM':[], 'S21_LOGM':[], 'S22_LOGM':[],
                     'Re[S11]': [], 'Re[S12]': [], 'Re[S21]': [], 'Re[S22]': [],
                     'Im[S11]': [], 'Im[S12]': [], 'Im[S21]': [], 'Im[S22]': []}
-    meas_count = 0
 
-    estimatedTime = (mpcnc_pause_dur+1)*num_meas
+    s_parameters_measured = 4
+    record_time_avg=0.001
+    estimatedTime = ((mpcnc_pause_dur+1)+(s_parameters_measured*0.204)+ record_time_avg)*num_meas
     print('Estimated time to completion (hours): ' + str(estimatedTime/3600))
 
 #     f = open(txt_fileName+".txt", "w")
 
-    time.sleep(5) # time delay to give the machine time to initialize
-    vna_data = np.empty(num_meas) #array to hold a value for each sample
-
     #initialize VNA
     vna_init(vna_num_points, visa_vna, vna_center_freq, vna_span)
-    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
 
     #3D plots for S11, S12, S21, S22
-    sPlot=plt.figure(1)
-    sPlot.tight_layout(pad=3.0)
-    ax1 = sPlot.add_subplot(221, projection = '3d')
+    s_param_fig=plt.figure(1)
+#     plt.ion()
+#     plt.show()
+    s_param_fig.tight_layout(pad=3.0)
+    ax1 = s_param_fig.add_subplot(221, projection = '3d')
     ax1.set_title('S11')
     ax1.set_xlabel('X Position (mm)')
     ax1.set_ylabel('Y Position (mm)')
     ax1.set_zlabel('Z Position (mm)')
-    ax1.view_init(elev=30, azim=90)
+    ax1.view_init(elev=30, azim=30)
  
-    ax2 = sPlot.add_subplot(222, projection = '3d')
+    ax2 = s_param_fig.add_subplot(222, projection = '3d')
     ax2.set_title('S12')
     ax2.set_xlabel('X Position (mm)')
     ax2.set_ylabel('Y Position (mm)')
     ax2.set_zlabel('Z Position (mm)')
-    ax2.view_init(elev=30, azim=90)
+    ax2.view_init(elev=30, azim=30)
      
-    ax3 = sPlot.add_subplot(223, projection = '3d')
+    ax3 = s_param_fig.add_subplot(223, projection = '3d')
     ax3.set_title('S21')
     ax3.set_xlabel('X Position (mm)')
     ax3.set_ylabel('Y Position (mm)')
     ax3.set_zlabel('Z Position (mm)')
-    ax3.view_init(elev=30, azim=90)
+    ax3.view_init(elev=30, azim=30)
  
-    ax4 = sPlot.add_subplot(224, projection = '3d')
+    ax4 = s_param_fig.add_subplot(224, projection = '3d')
     ax4.set_title('S22')
     ax4.set_xlabel('X Position (mm)')
     ax4.set_ylabel('Y Position (mm)')
     ax4.set_zlabel('Z Position (mm)')
-    ax4.view_init(elev=30, azim=90)
+    ax4.view_init(elev=30, azim=30)
     
 #     print("x_coords: {}".format(sampling_x_coordinates))
 #     print("y_coords: {}".format(sampling_y_coordinates))
 #     print("z_coords: {}".format(sampling_z_coordinates))
 
     # Safety extent sweep and plot extent setup
+    print("\n\n--------------------------")
+    print("Starting Volume Extent Sweep...")
     z_extent_array = [sampling_z_coordinates[0], sampling_z_coordinates[-1]]
     y_extent_array = [sampling_y_coordinates[0], sampling_y_coordinates[-1]]
     x_extent_array = [sampling_x_coordinates[0], sampling_x_coordinates[-1]]
-
-    for z_count, z_coord in enum(z_extent_array): # for each z plane 
+    for z_count, z_coord in enumerate(z_extent_array): # for each z plane 
             manual_z_entry_txt.set(str(round(z_coord,3)))                
-            for _y_count, y_coord in enum(y_extent_array): # for each row
+            for _y_count, y_coord in enumerate(y_extent_array): # for each row
                 manual_y_entry_txt.set(str(round(y_coord,3)))
-                for _x_count, x_coord in enum(x_extent_array): # moves the tool to each successive sampling spot in the row
+                for _x_count, x_coord in enumerate(x_extent_array): # moves the tool to each successive sampling spot in the row
                     manual_x_entry_txt.set(str(round(x_coord,3)))
                     
                     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                       manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+                       manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
+                    
                     mpcnc_pause(mpcnc_pause_dur, ser_rambo)
       
                     s11_logm = vna_record(vna_num_points, 'S11', 'LOGM', visa_vna) #magnitude value
@@ -561,52 +562,71 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                     s21_array = np.concatenate([s21_array, np.array([s21_logm])])
                     s22_array = np.concatenate([s22_array, np.array([s22_logm])])
                     #plotting 
-#                     if(meas_count != 0):
-#     #                     print("maybe remove colorbars first?")
-#                         colorbar1.remove()
-#                         colorbar2.remove()
-#                         colorbar3.remove()
-#                         colorbar4.remove()
-                  
+#                     s_param_fig.clf()
+
+#                     ax1.cla()
                     ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
-                    colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
-                    colorbar1.set_label('Decibels')
-     
+#                     ax1.imshow()
+                    
+#                     ax2.cla()
                     ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
-                    colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
-                    colorbar2.set_label('Decibels')
-     
+#                     ax2.imshow()
+                    
+#                     ax3.cla()
                     ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
-                    colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
-                    colorbar3.set_label('Decibels')
+#                     ax3.imshow()
                      
-                    ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet')
-                    colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
-                    colorbar4.set_label('Decibels')    
+#                     ax4.cla()
+                    ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet') 
+#                     ax4.imshow()
           
+#                     plt.draw()
                     plt.pause(0.01)
     
-    y_positive_direction = False
-    x_positive_direction = False
+    # Return to Relative Home
+    manual_z_entry_txt.set(str(0.0))
+    manual_y_entry_txt.set(str(0.0))
+    manual_x_entry_txt.set(str(0.0))
+    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
     
-    for z_count, z_coord in enum(sampling_z_coordinates): # for each z plane 
+    print("\n\n--------------------------")
+    print("Starting Volume Characterization...")
+    
+    # Slowing down the feedrate during the scan
+    mpcnc_init_feedrate = float(manual_speed_entry_txt.get())
+#     vol_step_list = [vol_x_step, vol_y_step, vol_z_step]
+#     largest_step_size = 100 # units: mm
+#     manual_speed_entry_txt.set(str(mpcnc_init_feedrate/(largest_step_size/max(vol_step_list)))) # Decrease the feedrate if the step size is smaller than 100mm
+    
+#     print("mpcnc_feedrate_str:{}|manual_speed_entry_txt:{}".format(mpcnc_feedrate_str,manual_speed_entry_txt.get()))
+    scan_running = True
+    meas_count = 0
+    vna_read_avg_dur = 0; data_record_avg_dur = 0    
+    y_positive_direction = False; x_positive_direction = False
+    _z_coord = None
+    for z_count, z_coord in enumerate(sampling_z_coordinates): # for each z plane 
+#         print("z:{}".format(sampling_z_coordinates))
         manual_z_entry_txt.set(str(round(z_coord,3)))
+        
 #         print("\nz_coord = {}".format(z_coord))        
         y_positive_direction = not(y_positive_direction)
 #         print("y_positive_direction = {}".format(y_positive_direction))
         if y_positive_direction == True:
             _sampling_y_coordinates = sampling_y_coordinates
         else:
-            _sampling_y_coordinates = reversed(sampling_y_coordinates)
-             
-        for _y_count, y_coord in enum(_sampling_y_coordinates): # for each row
+            _sampling_y_coordinates = list(reversed(sampling_y_coordinates))
+        
+#         print("y:{}".format(_sampling_y_coordinates))
+        
+        for _y_count, y_coord in enumerate(_sampling_y_coordinates): # for each row
 #             f.write("\n")
             manual_y_entry_txt.set(str(round(y_coord,3)))
             
             if y_positive_direction:
                 y_count = _y_count
             else:
-                y_count = len(_sampling_x_coordinates)-_y_count-1
+                y_count = len(_sampling_y_coordinates)-_y_count-1
         
 #             print("\ny_coord = {}".format(y_coord))
             x_positive_direction = not(x_positive_direction)
@@ -614,25 +634,49 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
             if x_positive_direction:
                 _sampling_x_coordinates = sampling_x_coordinates
             else:
-                _sampling_x_coordinates = reversed(sampling_x_coordinates)
-             
-            for _x_count, x_coord in enum(_sampling_x_coordinates): # moves the tool to each successive sampling spot in the row
+                _sampling_x_coordinates = list(reversed(sampling_x_coordinates))
+            
+#             print("x:{}".format(_sampling_x_coordinates))
+            
+            for _x_count, x_coord in enumerate(_sampling_x_coordinates): # moves the tool to each successive sampling spot in the row
+                
                 manual_x_entry_txt.set(str(round(x_coord,3)))
 #                 print("x_coord = {}".format(x_coord))
+                
+                time_0 = time.time()
                 mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                   manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
-                mpcnc_pause(mpcnc_pause_dur, ser_rambo) 
-#                 time.sleep(3)
-  
+                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
+                if mpcnc_pause_dur > vna_read_avg_dur+data_record_avg_dur:
+                    mpcnc_pause(mpcnc_pause_dur-(vna_read_avg_dur+data_record_avg_dur), ser_rambo) 
+                time_1 = time.time()
+                
+                time_diff = time_1-time_0
+                if meas_count == 0:
+                    mpcnc_move_avg_dur = time_diff
+                else:
+                    mpcnc_move_avg_dur = float(mpcnc_move_avg_dur+time_diff)/2 # Running average
+                
+                time_0 = time.time()
                 s11_logm = vna_record(vna_num_points, 'S11', 'LOGM', visa_vna) #magnitude value
                 s12_logm = vna_record(vna_num_points, 'S12', 'LOGM', visa_vna)
                 s21_logm = vna_record(vna_num_points, 'S21', 'LOGM', visa_vna)
                 s22_logm = vna_record(vna_num_points, 'S22', 'LOGM', visa_vna)
                 
-                s11_re, s11_im = vna_record(vna_num_points, 'S11', 'SMIMRI', visa_vna) #magnitude value
-                s12_re, s12_im = vna_record(vna_num_points, 'S12', 'SMIMRI', visa_vna)
-                s21_re, s21_im = vna_record(vna_num_points, 'S21', 'SMIMRI', visa_vna)
-                s22_re, s22_im = vna_record(vna_num_points, 'S22', 'SMIMRI', visa_vna)
+                s11_re, s11_im = 0, 0
+                s12_re, s12_im = 0, 0
+                s21_re, s21_im = 0, 0
+                s22_re, s22_im = 0, 0
+                
+#                 s11_re, s11_im = vna_record(vna_num_points, 'S11', 'SMIMRI', visa_vna) #magnitude value
+#                 s12_re, s12_im = vna_record(vna_num_points, 'S12', 'SMIMRI', visa_vna)
+#                 s21_re, s21_im = vna_record(vna_num_points, 'S21', 'SMIMRI', visa_vna)
+#                 s22_re, s22_im = vna_record(vna_num_points, 'S22', 'SMIMRI', visa_vna)
+                time_1 = time.time()
+                time_diff = time_1-time_0
+                if meas_count == 0:
+                    vna_read_avg_dur = time_diff
+                else:
+                    vna_read_avg_dur = float(vna_read_avg_dur+time_diff)/2 # Running average
                   
                 if x_positive_direction:
                     x_count = _x_count
@@ -640,6 +684,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                     x_count = len(_sampling_x_coordinates)-_x_count-1
 #                 print("S11: ", value, "\nS12: ", value2, "\nS21: ", value3, "\nS22: ", value4, "\n\n")
                 
+                time_0 = time.time()
                 data_rec[x_count, y_count, z_count, 0] = run_num
                 data_rec[x_count, y_count, z_count, 1] = meas_count
                 data_rec[x_count, y_count, z_count, 2] = x_coord
@@ -670,38 +715,12 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 s21_array = np.concatenate([s21_array, np.array([s21_logm])])
                 s22_array = np.concatenate([s22_array, np.array([s22_logm])])
                 #plotting 
-#                 if(meas_count != 0):
-# #                     print("maybe remove colorbars first?")
-#                     colorbar1.remove()
-#                     colorbar2.remove()
-#                     colorbar3.remove()
-#                     colorbar4.remove()
-              
-                ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
-                colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
-                colorbar1.set_label('Decibels')
- 
-                ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
-                colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
-                colorbar2.set_label('Decibels')
- 
-                ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
-                colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
-                colorbar3.set_label('Decibels')
-                 
-                ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet')
-                colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
-                colorbar4.set_label('Decibels')    
-      
-                plt.pause(0.01)
   
 #                 f.write(str(x_coord) + "," + str(y_coord) + "," + str(z_coord) + "," + str(value))
 #                 f.write("," + str(value2) + "," + str(value3) + "," + str(value4)) 
 #                 f.write("\n")
 
-                # NOTE: need to fix the variable names here after we 
-                # revert back the changes we made for testing/debugging 
-                # ALSO: might need to update how things are graphed
+                # ToDo: might need to update how things are graphed
 
                 # currently run number is always set to 1
                 measurements['Run number'].append(1)
@@ -729,6 +748,40 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 measurements['Im[S12]'].append(s12_im)
                 measurements['Im[S21]'].append(s21_im)
                 measurements['Im[S22]'].append(s22_im)
+                
+                if (z_coord != _z_coord) or (z_coord == sampling_z_coordinates[0]): # only plot when z_coord changes or during the first layer
+                    if(meas_count != 0):
+                        colorbar1.remove()
+                        colorbar2.remove()
+                        colorbar3.remove()
+                        colorbar4.remove()
+                    
+                    ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
+                    colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
+                    colorbar1.set_label('dB')
+                    
+                    ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
+                    colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
+                    colorbar2.set_label('dB')
+                    
+                    ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
+                    colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
+                    colorbar3.set_label('dB')
+                    
+                    ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet')
+                    colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
+                    colorbar4.set_label('dB')    
+                    
+                    plt.pause(0.01)
+                    
+                    _z_coord = z_coord
+                
+                time_1 = time.time()
+                time_diff = time_1-time_0
+                if meas_count == 0:
+                    data_record_avg_dur = time_diff
+                else:
+                    data_record_avg_dur = float(data_record_avg_dur+time_diff)/2 # Running average
 
                 # increment 
                 meas_count += 1
@@ -741,15 +794,16 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 time_remaining = (num_meas-meas_count)*time_per_meas
                 hrs_mins_secs_remaining = datetime.timedelta(0, time_remaining)
                  
-                print("% Complete: {}%| Time Remaining: {}".format(percent_complete, hrs_mins_secs_remaining))
+
                 #ToDo: Running average of time to completion
-                 
+            print("% Complete: {}%| Time Remaining: {}".format(percent_complete, hrs_mins_secs_remaining))
+            print("Avg. Duration: Move={}s| VNA={}s| Record={}s".format(round(mpcnc_move_avg_dur,3), round(vna_read_avg_dur,3), round(data_record_avg_dur,3)))
     
     manual_x_entry_txt.set(str(round(0,3)))
     manual_y_entry_txt.set(str(round(0,3)))
     manual_z_entry_txt.set(str(round(0,3)))
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-               manual_z_entry_txt, manual_speed_entry_txt, ser_rambo)
+               manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
 
     pd.DataFrame(data_rec).to_csv(txt_fileName+".csv")
     
@@ -763,9 +817,13 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     with open(txt_fileName+"_df.csv", "w") as f:
         df.to_csv(f)
 
+    manual_speed_entry_txt.set(str(mpcnc_init_feedrate))
         
 #     f.close()
-    ser_rambo.close()
+#     ser_rambo.close()
+
+#     plt.ioff()  # Make sure to make plt.show() blocking again, otherwise it'll run
+#     plt.show()
 
     now = time.time()
     duration_took = now-then
@@ -774,6 +832,8 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
 
     time_disp = tk.Label(mpfcs_setup_frame, text = hours_took, font = 'Helvetica 18 bold' )
     time_disp.grid( row = 15, column = 1, pady = 10, padx = 10)
+    
+    scan_running = False
     
 # def mpcnc_step_xyz(x_step, y_step, z_step, manual_speed, setting, ser_rambo):
 #     if setting == 0:
@@ -799,7 +859,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
 # 
 #     speed_default = 10*60 # 10mm/s*60s/1min
 #     speed = manual_speed;
-#     mpcnc_move_xyz(mpcnc_step_xyz.x_loc, mpcnc_step_xyz.y_loc, mpcnc_step_xyz.z_loc, speed, ser_rambo) # to initialize position
+#     mpcnc_move_xyz(mpcnc_step_xyz.x_loc, mpcnc_step_xyz.y_loc, mpcnc_step_xyz.z_loc, speed, scan_running, ser_rambo) # to initialize position
 
 # Creating a Window of the Application
 window = tk.Tk()
@@ -1087,28 +1147,28 @@ mpcnc_vol_length_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Length (m
 mpcnc_vol_length_lbl.grid(row = 1, column = 0)
 mpcnc_vol_length_entry_txt = tk.StringVar()
 mpcnc_vol_length_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_vol_length_entry_txt)
-mpcnc_vol_length_entry_txt.set("30")
+mpcnc_vol_length_entry_txt.set("100")
 mpcnc_vol_length_txt.grid(row = 1, column = 1)
 
 mpcnc_vol_width_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Width (mm):")
 mpcnc_vol_width_lbl.grid(row = 2, column = 0)
 mpcnc_vol_width_entry_txt = tk.StringVar()
 mpcnc_vol_width_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_vol_width_entry_txt)
-mpcnc_vol_width_entry_txt.set("30")
+mpcnc_vol_width_entry_txt.set("50")
 mpcnc_vol_width_txt.grid(row = 2, column = 1)
 
 mpcnc_vol_height_lbl = tk.Label(mpfcs_setup_frame, text = "Scan Volume Height (mm):")
 mpcnc_vol_height_lbl.grid(row = 3, column = 0)
 mpcnc_vol_height_entry_txt = tk.StringVar()
 mpcnc_vol_height_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_vol_height_entry_txt)
-mpcnc_vol_height_entry_txt.set("20")
+mpcnc_vol_height_entry_txt.set("40")
 mpcnc_vol_height_txt.grid(row = 3, column = 1)
 
 mpcnc_x_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "X Step Size (mm):") ## used to be samplingF
 mpcnc_x_step_size_lbl.grid(row = 4, column = 0)
 mpcnc_x_step_size_entry_txt = tk.StringVar()
 mpcnc_x_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_x_step_size_entry_txt)
-mpcnc_x_step_size_entry_txt.set("10")
+mpcnc_x_step_size_entry_txt.set("20")
 mpcnc_x_step_size_txt.grid(row = 4, column = 1)
 
 mpcnc_y_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "Y Step Size (mm):")
@@ -1153,7 +1213,7 @@ vna_sweep_pts_lbl = tk.Label(mpfcs_setup_frame, text = "# Sweep Points:")
 vna_sweep_pts_lbl.grid(row = 11, column = 0)
 vna_sweep_pts_entry_txt = tk.StringVar()
 vna_sweep_pts_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=vna_sweep_pts_entry_txt)
-vna_sweep_pts_entry_txt.set("1601")
+vna_sweep_pts_entry_txt.set("11")
 vna_sweep_pts_txt.grid(row = 11, column = 1)
 
 # s = ttk.Separator(mpfcs_setup_frame,orient='horizontal')
@@ -1227,6 +1287,7 @@ s21_btn.grid(row = 0, column = 6, padx = 10, pady = 5)
 
 #initialize the timer
 hours_took = 0
+scan_running = False
 if DEBUG == False:
     tilt_entry_txt.set(str(round(0,3)))
     pan_entry_txt.set(str(round(0,3)))
@@ -1234,10 +1295,11 @@ if DEBUG == False:
     mpcnc_pos_read.m114_output_static = ""
     ser_rambo.write(("M92 Z2267.72").encode() + b'\n') # Setting the Z Tower steps_per_unit
     
-    vna_center_freq = float(vna_center_freq_entry_txt.get())
-    vna_span = int(vna_span_entry_txt.get())
-    vna_num_points = int(vna_sweep_pts_entry_txt.get())
-    vna_init(vna_num_points, visa_vna, vna_center_freq, vna_span)
+#     vna_center_freq = float(vna_center_freq_entry_txt.get())
+#     vna_span = int(vna_span_entry_txt.get())
+#     vna_num_points = int(vna_sweep_pts_entry_txt.get())
+#     vna_init(vna_num_points, visa_vna, vna_center_freq, vna_span)
+
 
 ######################### end of code
 
