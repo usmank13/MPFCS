@@ -441,7 +441,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     vna_span = int(vna_span_entry_txt.get())
     vna_num_points = int(vna_sweep_pts_entry_txt.get())
     
-#     txt_fileName = filename_entry_txt.get()
+    save_file_name = filename_entry_txt.get()
     
     then = time.time()
 
@@ -480,10 +480,16 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
 
     s_parameters_measured = 4
     record_time_avg=0.001
-    estimatedTime = ((mpcnc_pause_dur+1)+(s_parameters_measured*0.204)+ record_time_avg)*num_meas
-    print('Estimated time to completion (hours): ' + str(estimatedTime/3600))
+    move_dur_avg = 2.5 #seconds
+    if mpcnc_pause_dur > move_dur_avg:
+        estimated_time = ((mpcnc_pause_dur+1)+(s_parameters_measured*0.204)+ record_time_avg)*num_meas
+    else:
+        estimated_time = (move_dur_avg+(s_parameters_measured*0.204)+ record_time_avg)*num_meas
+        
+    hrs_mins_secs_remaining = datetime.timedelta(0, estimated_time)
+    print('Estimated time to completion (hours): ' + str(estimated_time/3600))
 
-#     f = open(txt_fileName+".txt", "w")
+#     f = open(save_file_name+".txt", "w")
 
     #initialize VNA
     vna_init(vna_num_points, visa_vna, vna_center_freq, vna_span)
@@ -805,8 +811,10 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
                manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
 
-    pd.DataFrame(data_rec).to_csv(txt_fileName+".csv")
+    with open(save_file_name+'.npy', 'wb') as f:
+        np.save(f, data_rec)
     
+    print("Saved np.array to {}".format(save_file_name+'.npy'))
     
     # convert measurements to Pandas dataframe
     df = pd.DataFrame(measurements)
@@ -814,9 +822,15 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     # save to csv in current working directory 
     file_path = os.getcwd()
     
-    with open(txt_fileName+"_df.csv", "w") as f:
+    with open(save_file_name+"_df.csv", "w") as f:
         df.to_csv(f)
+        
+    print("Saved DataFrame to {}".format(save_file_name+"_df.csv"))
 
+    plt.savefig(save_file_name+'.png')
+    
+    print("Saved Figure to {}".format(save_file_name+'.png'))
+    
     manual_speed_entry_txt.set(str(mpcnc_init_feedrate))
         
 #     f.close()
