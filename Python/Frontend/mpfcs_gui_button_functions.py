@@ -6,14 +6,34 @@
 """
     
 """
-@brief Functionality for when the submit button is clicked. Disables the submit button, grays out
-input boxes so they can no longer be edited, and resets the start and reset button states. 
+@brief Functionality for when the check values button is clicked. Checks if inputs
+are valid and throws an error if they are not. If valid, disables the button and resets the start and reset button states. 
 
 @param[in] submit_val: submit button
 @param[in] start_btn, reset_btn: start and reset buttons
 @param[in] txt00-txt11: Input boxes
 """
-def submit_values(submit_val, start_btn, reset_btn, txt00,txt01,txt02,txt03,txt04,txt05,txt07,txt08,txt09,txt10,txt11):
+def submit_values(submit_val, start_btn, tp_reset_btn, mpcnc_vol_length_entry_txt, mpcnc_vol_width_entry_txt,
+                  mpcnc_dwell_duration_entry_txt, mpcnc_x_step_size_entry_txt, mpcnc_y_step_size_entry_txt,
+                  mpcnc_vol_height_entry_txt, vna_center_freq_entry_txt, vna_span_entry_txt, vna_sweep_pts_entry_txt,
+                  mpcnc_z_step_size_entry_txt, filename_entry_txt):
+    length = int(mpcnc_vol_length_entry_txt.get())
+    width = int(mpcnc_vol_width_entry_txt.get())
+    height = int(mpcnc_vol_height_entry_txt.get())
+    xstep = int(mpcnc_x_step_size_entry_txt.get())
+    ystep = int(mpcnc_y_step_size_entry_txt.get())
+    zstep = int(mpcnc_z_step_size_entry_txt.get())
+    min_step = 0.01
+    length_valid = (length >= 0) and (length <= 610)
+    width_valid = (width >= 0) and (width <= 610)
+    height_valid = height >= 0 and (height <= 305)
+    steps_valid = (xstep >= min_step) and (ystep >= min_step) and (zstep >= min_step)
+    possible_points = [3, 11, 21, 26, 51, 101, 201, 401, 801, 1601]
+    poin_valid = num_points in possible_points
+    valids = [length_valid, width_valid, height_valid, steps_valid, poin_valid]
+    if False in valids:
+        raise Exception("One or more invalid inputs. " +
+        "Please check documentation for additional guidance on acceptable inputs.")
     submit_val.configure(state = 'disabled')
 #     txt00.configure(state = 'disabled')
 #     txt01.configure(state = 'disabled')
@@ -28,7 +48,7 @@ def submit_values(submit_val, start_btn, reset_btn, txt00,txt01,txt02,txt03,txt0
 #     txt10.configure(state = 'disabled')
 #     txt11.configure(state = 'disabled')
     start_btn.configure(state = 'normal')
-    reset_btn.configure(state = 'normal')
+    tp_reset_btn.configure(state = 'normal')
     
 """
 @brief Resets the system GUI
