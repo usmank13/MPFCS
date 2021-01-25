@@ -9,6 +9,11 @@ DEBUG = False
 TILT_SERVO = "HS-53"
 PAN_SERVO = "HS-5055MG-R"
 
+BED_SIZE_X = 600
+BED_SIZE_Y = 600
+BED_SIZE_Z = 300
+Z_ENDSTOP_HEIGHT_MM = 10
+
 import os
 import numpy as np
 import pandas as pd
@@ -347,6 +352,19 @@ def handler_send():
 def handler_reset_graph():
     file_txt.configure(state = 'normal')
     
+def handler_od_vol_setup():
+    coil_od = float(od_vol_od_entry_txt.get())
+    od_vol_critical_coupling_multplier = float(od_vol_critical_coupling_multplier_entry_txt.get())
+    vol_max = str(np.rint((od_vol_critical_coupling_multplier*np.sqrt(2)*coil_od)/10)*10)
+    
+    mpcnc_vol_length_entry_txt.set(vol_max)
+    mpcnc_vol_width_entry_txt.set(vol_max)
+    mpcnc_vol_height_entry_txt.set(vol_max)   
+    
+    mpcnc_x_step_size_entry_txt.set(od_vol_min_step_entry_txt.get())
+    mpcnc_y_step_size_entry_txt.set(od_vol_min_step_entry_txt.get())
+    mpcnc_z_step_size_entry_txt.set(od_vol_min_step_entry_txt.get())
+    
 #NOTE: should probably clean this up and make the graphing more modular,
 # don't really need diff functions for each s param
 def handler_s11_plt():
@@ -502,11 +520,84 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     save_file_name = filename_entry_txt.get()
     
     then = time.time()
+    
+    sampling_x_coordinates = []
+    sampling_y_coordinates = [] 
+    sampling_z_coordinates = []
 
-    # initializing some values
-    sampling_x_coordinates = np.arange(-vol_length/2, vol_length/2+vol_x_step, vol_x_step)
-    sampling_y_coordinates = np.arange(-vol_width/2, vol_width/2+vol_y_step, vol_y_step)    
-    sampling_z_coordinates = np.arange(-vol_height/2, vol_height/2+vol_z_step, vol_z_step)
+    if od_vol_od_entry_txt.get() == '0':
+        # initializing some values
+        sampling_x_coordinates = np.arange(-vol_length/2, vol_length/2+vol_x_step, vol_x_step)
+        sampling_y_coordinates = np.arange(-vol_width/2, vol_width/2+vol_y_step, vol_y_step)    
+        sampling_z_coordinates = np.arange(-vol_height/2, vol_height/2+vol_z_step, vol_z_step)   
+    else:
+        sampling_x_coordinates = []
+        sampling_y_coordinates = []
+        sampling_z_coordinates = [] 
+        od_vol_od = np.around(float(od_vol_od_entry_txt.get(),decimals=1))
+        od_vol_r = np.around(od_vol_od/2.0,decimals=1)
+        
+        scan_vol_to_coil_od = 3
+        mpcnc_vol_length_entry_txt.set(str(scan_vol_to_coil_od*od_vol_od))
+        vol_length = float(mpcnc_vol_length_entry_txt.get())
+        critical_coupling_r = np.around(np.sqrt(2)*od_vol_r, decimals=1)
+        print("Critical Coupling Radius (mm): {}".format(critical_coupling_r))
+        
+        pos = np.around(-vol_length/2.0, decimals=1)
+        sampling_x_coordinates.append(pos)
+        sampling_y_coordinates.append(pos)
+        sampling_z_coordinates.append(pos) 
+        min_step = float(od_vol_min_step_entry_txt.get())
+
+        mult = BED_SIZE_X
+        while pos < 0:     
+            _pos = pos + mult*min_step
+#             print("_pos: {}|mult*cc: {}".format(_pos, (mult-1)*critical_coupling_r))
+        #     if _pos == 0:
+        #         break;
+        #     if np.abs(_pos) < (mult-1)*critical_coupling_r and mult > 1:
+        #         mult -= 1
+        #     else:
+        #         pos += mult*min_step 
+        #         sampling_x_coordinates.append(pos)
+        #         sampling_y_coordinates.append(pos)
+        #         sampling_z_coordinates.append(pos)     
+            if _pos == 0:
+                break;
+            if np.abs(_pos) < (mult-1)*od_vol_r and mult > 1:
+                mult -= 1
+            else:
+                pos += mult*min_step
+                sampling_x_coordinates.append(np.around(pos, decimals=1))
+                sampling_y_coordinates.append(np.around(pos, decimals=1))
+                sampling_z_coordinates.append(np.around(pos, decimals=1))   
+#             print(pos, mult)
+            
+        # print("#1:{}".format(sampling_x_coordinates))
+        
+        sampling_x_coordinates_rev = list(np.abs(list(reversed(sampling_x_coordinates))))
+        sampling_y_coordinates_rev = list(np.abs(list(reversed(sampling_y_coordinates))))
+        sampling_z_coordinates_rev = list(np.abs(list(reversed(sampling_z_coordinates))))
+        
+        # print("#Rev:{}".format(sampling_x_coordinates_rev))
+        
+        # sampling_x_coordinates = []
+        sampling_y_coordinates = []
+        sampling_x_coordinates.append(0.0)
+        sampling_y_coordinates.append(0.0)
+        sampling_z_coordinates.append(0.0)
+        
+        sampling_x_coordinates = sampling_x_coordinates + sampling_x_coordinates_rev
+        sampling_y_coordinates = sampling_y_coordinates + sampling_y_coordinates_rev
+        sampling_z_coordinates = sampling_z_coordinates + sampling_z_coordinates_rev
+        
+        # print("#1:{}".format(sampling_x_coordinates))
+        
+        print("x_coords: {}".format(sampling_x_coordinates))
+        print("y_coords: {}".format(sampling_y_coordinates))
+        print("z_coords: {}".format(sampling_z_coordinates))
+        
+#         print("Len: {}| hrs: {}".format(len(sampling_x_coordinates), 4*len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)/3600))
     
     s11_array = np.array([])
     s12_array = np.array([])
@@ -525,16 +616,18 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     #    [S12], Re[S12], Im[S12]
     #    [S21], Re[S21], Im[S21]
     #    [S22], Re[S22], Im[S22]
-    data_rec = np.zeros((len(sampling_x_coordinates),len(sampling_y_coordinates),len(sampling_z_coordinates),20),dtype=np.float32)
+    data_rec = np.zeros((len(sampling_x_coordinates),len(sampling_y_coordinates),len(sampling_z_coordinates),25),dtype=np.float32)
     print("Data Shape: {}| Memory Footprint: {}kB".format(np.shape(data_rec), round(float(data_rec.size*data_rec.itemsize)/1024), 3))
 
     firstRun = 0;
 
     num_meas = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
-    measurements = {'Run number': [], 'Measurement num': [], 'X Pos': [], 'Y Pos': [], 'Z Pos': [], 
-                    'Tilt angle': [], 'Pan angle': [], 'S11_LOGM':[], 'S12_LOGM':[], 'S21_LOGM':[], 'S22_LOGM':[],
-                    'Re[S11]': [], 'Re[S12]': [], 'Re[S21]': [], 'Re[S22]': [],
-                    'Im[S11]': [], 'Im[S12]': [], 'Im[S21]': [], 'Im[S22]': [], 'B Field': []}
+
+    measurements = {'run_number': [], 'measurement_number': [], 'tilt_angle': [], 'pan_angle': [],\
+                    'z_endstop_height': [], 'coil_height': [], 'x_offset': [], 'y_offset': [], 'z_offset': [],\
+                    'x_pos': [], 'y_pos': [], 'z_pos': [], 's11_logm':[], 's11_re':[], 's11_im':[],\
+                    's12_logm':[], 's12_re':[], 's12_im':[], 's21_logm':[], 's21_re':[], 's21_im':[],\
+                    's22_logm':[], 's22_re':[], 's22_im':[], 'b_field': []}
 
     s_parameters_measured = 4
     record_time_avg=0.001
@@ -749,26 +842,37 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
 #                 print("S11: ", value, "\nS12: ", value2, "\nS21: ", value3, "\nS22: ", value4, "\n\n")
                 
                 time_0 = time.time()
+                
+                b_field = 0.00181026*np.sqrt(10 ** (s21_logm/10))
+                
                 data_rec[x_count, y_count, z_count, 0] = run_num
                 data_rec[x_count, y_count, z_count, 1] = meas_count
-                data_rec[x_count, y_count, z_count, 2] = x_coord
-                data_rec[x_count, y_count, z_count, 3] = y_coord
-                data_rec[x_count, y_count, z_count, 4] = z_coord
-                data_rec[x_count, y_count, z_count, 5] = float(tilt_entry_txt.get())
-                data_rec[x_count, y_count, z_count, 6] = float(pan_entry_txt.get())
-                data_rec[x_count, y_count, z_count, 7] = vna_center_freq
-                data_rec[x_count, y_count, z_count, 8] = s11_logm
-                data_rec[x_count, y_count, z_count, 9] = s11_re
-                data_rec[x_count, y_count, z_count, 10] = s11_im
-                data_rec[x_count, y_count, z_count, 11] = s12_logm
-                data_rec[x_count, y_count, z_count, 12] = s12_re
-                data_rec[x_count, y_count, z_count, 13] = s12_im
-                data_rec[x_count, y_count, z_count, 14] = s21_logm
-                data_rec[x_count, y_count, z_count, 15] = s21_re
-                data_rec[x_count, y_count, z_count, 16] = s21_im
-                data_rec[x_count, y_count, z_count, 17] = s22_logm
-                data_rec[x_count, y_count, z_count, 18] = s22_re
-                data_rec[x_count, y_count, z_count, 19] = s22_im
+                data_rec[x_count, y_count, z_count, 2] = float(tilt_entry_txt.get())
+                data_rec[x_count, y_count, z_count, 3] = float(pan_entry_txt.get())
+                data_rec[x_count, y_count, z_count, 4] = Z_ENDSTOP_HEIGHT_MM
+                data_rec[x_count, y_count, z_count, 5] = float(od_vol_coil_h_entry_txt.get())
+                data_rec[x_count, y_count, z_count, 6] = mpcnc_move_xyz.x_offset
+                data_rec[x_count, y_count, z_count, 7] = mpcnc_move_xyz.y_offset
+                data_rec[x_count, y_count, z_count, 8] = mpcnc_move_xyz.z_offset                
+                data_rec[x_count, y_count, z_count, 9] = x_coord
+                data_rec[x_count, y_count, z_count, 10] = y_coord
+                data_rec[x_count, y_count, z_count, 11] = z_coord
+
+                data_rec[x_count, y_count, z_count, 12] = vna_center_freq
+                data_rec[x_count, y_count, z_count, 13] = s11_logm
+                data_rec[x_count, y_count, z_count, 14] = s11_re
+                data_rec[x_count, y_count, z_count, 15] = s11_im
+                data_rec[x_count, y_count, z_count, 16] = s12_logm
+                data_rec[x_count, y_count, z_count, 17] = s12_re
+                data_rec[x_count, y_count, z_count, 18] = s12_im
+                data_rec[x_count, y_count, z_count, 19] = s21_logm
+                data_rec[x_count, y_count, z_count, 20] = s21_re
+                data_rec[x_count, y_count, z_count, 21] = s21_im
+                data_rec[x_count, y_count, z_count, 22] = s22_logm
+                data_rec[x_count, y_count, z_count, 23] = s22_re
+                data_rec[x_count, y_count, z_count, 24] = s22_im
+                
+                data_rec[x_count, y_count, z_count, 25] = b_field
                 
                 x_coords = np.concatenate([x_coords, np.array([x_coord])])
                 y_coords = np.concatenate([y_coords, np.array([y_coord])])
@@ -787,35 +891,40 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 # ToDo: might need to update how things are graphed
 
                 # currently run number is always set to 1
-                measurements['Run number'].append(1)
+                measurements['run_number'].append(1)
 
-                measurements['Measurement num'].append(meas_count + 1)
-                measurements['X Pos'].append(x_coord)
-                measurements['Y Pos'].append(y_coord)
-                measurements['Z Pos'].append(z_coord)
-
-                # taken from tilt and pan textbox entries
-                measurements['Tilt angle'].append(float(tilt_entry_txt.get())) 
-                measurements['Pan angle'].append(float(pan_entry_txt.get()))
+                measurements['measurement_number'].append(meas_count + 1)
                 
-                measurements['S11_LOGM'].append(s11_logm)
-                measurements['S12_LOGM'].append(s12_logm)
-                measurements['S21_LOGM'].append(s21_logm)
-                measurements['S22_LOGM'].append(s22_logm)
-
-                measurements['Re[S11]'].append(s11_re)
-                measurements['Re[S12]'].append(s12_re)
-                measurements['Re[S21]'].append(s21_re)
-                measurements['Re[S22]'].append(s22_re)
+                measurements['tilt_angle'].append(float(tilt_entry_txt.get())) 
+                measurements['pan_angle'].append(float(pan_entry_txt.get()))
                 
-                measurements['Im[S11]'].append(s11_im)
-                measurements['Im[S12]'].append(s12_im)
-                measurements['Im[S21]'].append(s21_im)
-                measurements['Im[S22]'].append(s22_im)
+                measurements['z_endstop_height'] = Z_ENDSTOP_HEIGHT_MM
+                measurements['coil_height'] = float(od_vol_coil_h_entry_txt.get())
+                measurements['x_offset'].append(mpcnc_move_xyz.x_offset)
+                measurements['y_offset'].append(mpcnc_move_xyz.y_offset)
+                measurements['z_offset'].append(mpcnc_move_xyz.z_offset)                
+                measurements['x_pos'].append(x_coord)
+                measurements['y_pos'].append(y_coord)
+                measurements['z_pos'].append(z_coord)
 
-                measurements['B Field'].append(0.00181026*np.sqrt(10 ** (s21_logm/10))) # B field from S21
-
+                measurements['s11_logm'].append(s11_logm)
+                measurements['s11_re'].append(s11_re)
+                measurements['s11_im'].append(s11_im)
                 
+                measurements['s12_logm'].append(s12_logm)
+                measurements['s12_re'].append(s12_re)
+                measurements['s12_im'].append(s12_im)
+                
+                measurements['s21_logm'].append(s21_logm)
+                measurements['s21_re'].append(s21_re)
+                measurements['s21_im'].append(s21_im)
+                
+                measurements['s22_logm'].append(s22_logm)
+                measurements['s22_re'].append(s22_re)
+                measurements['s22_im'].append(s22_im)
+
+                measurements['b_field'].append(b_field) # B field from S21 as recorded by the Beehive 100b
+
                 if (z_coord != _z_coord) or (z_coord == sampling_z_coordinates[0]): # only plot when z_coord changes or during the first layer
                     if(meas_count != 0):
                         colorbar1.remove()
@@ -1212,6 +1321,44 @@ tp_reset_btn = tk.Button(tp_label_frame, text="Reset to 0deg", command = handler
                          state = 'normal',  bg="red", fg="black", font = 'Helvetica 10')
 tp_reset_btn.grid(row = 3, column = 2, pady = 5)
 
+# Coil Outer Diameter Defined Volume Setup Frame -------------------------------
+
+od_vol_frame = ttk.LabelFrame(MPFCSTab, text = 'Radius Volume Setup')
+od_vol_frame.pack(fill = tk.BOTH, expand = True, side = 'top')
+
+od_vol_od_lbl = tk.Label(od_vol_frame, text = "Coil Outer Diameter (mm): ")
+od_vol_od_lbl.grid(row = 0, column = 0)
+od_vol_od_entry_txt = tk.StringVar()
+od_vol_od_entry_txt.set("0")
+od_vol_od_txt = tk.Entry(od_vol_frame, width = 10, textvariable=od_vol_od_entry_txt)
+od_vol_od_txt.grid(row = 0, column = 1)
+
+
+od_vol_coil_h_lbl = tk.Label(od_vol_frame, text = "Coil Height (mm): ")
+od_vol_coil_h_lbl.grid(row = 1, column = 0)
+od_vol_coil_h_entry_txt = tk.StringVar()
+od_vol_coil_h_entry_txt.set("3")
+od_vol_coil_h_txt = tk.Entry(od_vol_frame, width = 10, textvariable=od_vol_coil_h_entry_txt)
+od_vol_coil_h_txt.grid(row = 1, column = 1)
+
+od_vol_min_step_lbl = tk.Label(od_vol_frame, text = "Minimum Step Size: ")
+od_vol_min_step_lbl.grid(row = 2, column = 0)
+od_vol_min_step_entry_txt = tk.StringVar()
+od_vol_min_step_entry_txt.set("2")
+od_vol_min_step_txt = tk.Entry(od_vol_frame, width = 10, textvariable=od_vol_min_step_entry_txt)
+od_vol_min_step_txt.grid(row = 2, column = 1)
+
+od_vol_critical_coupling_multplier_lbl = tk.Label(od_vol_frame, text = "Critical Coupling Radius Multiplier: ")
+od_vol_critical_coupling_multplier_lbl.grid(row = 3, column = 0)
+od_vol_critical_coupling_multplier_entry_txt = tk.StringVar()
+od_vol_critical_coupling_multplier_entry_txt.set("3")
+od_vol_critical_coupling_multplier_txt = tk.Entry(od_vol_frame, width = 10, textvariable=od_vol_critical_coupling_multplier_entry_txt)
+od_vol_critical_coupling_multplier_txt.grid(row = 3, column = 1)
+
+od_vol_setup_btn = tk.Button(od_vol_frame, text= 'Setup', command = handler_od_vol_setup)
+od_vol_setup_btn.grid(row = 3, column = 2)
+
+
 # MPFCS Frame -------------------------------
 
 mpfcs_setup_frame = ttk.LabelFrame(MPFCSTab, text = '')
@@ -1239,21 +1386,21 @@ mpcnc_vol_height_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcn
 mpcnc_vol_height_entry_txt.set("40")
 mpcnc_vol_height_txt.grid(row = 3, column = 1)
 
-mpcnc_x_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "X Step Size (mm):") ## used to be samplingF
+mpcnc_x_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "X Min Step Size (mm):") ## used to be samplingF
 mpcnc_x_step_size_lbl.grid(row = 4, column = 0)
 mpcnc_x_step_size_entry_txt = tk.StringVar()
 mpcnc_x_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_x_step_size_entry_txt)
 mpcnc_x_step_size_entry_txt.set("20")
 mpcnc_x_step_size_txt.grid(row = 4, column = 1)
 
-mpcnc_y_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "Y Step Size (mm):")
+mpcnc_y_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "Y Min Step Size (mm):")
 mpcnc_y_step_size_lbl.grid(row = 5, column = 0)
 mpcnc_y_step_size_entry_txt = tk.StringVar()
 mpcnc_y_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_y_step_size_entry_txt)
 mpcnc_y_step_size_entry_txt.set("10")
 mpcnc_y_step_size_txt.grid(row = 5, column = 1)
 
-mpcnc_z_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "Z Step Size (mm):")
+mpcnc_z_step_size_lbl = tk.Label(mpfcs_setup_frame, text = "Z Min Step Size (mm):")
 mpcnc_z_step_size_lbl.grid(row = 6, column = 0)
 mpcnc_z_step_size_entry_txt = tk.StringVar()
 mpcnc_z_step_size_txt = tk.Entry(mpfcs_setup_frame, width = 10, textvariable=mpcnc_z_step_size_entry_txt)
@@ -1360,6 +1507,8 @@ s22_btn.grid(row = 0, column = 4, padx = 10, pady = 5)
 s21_btn = tk.Button(Parameters, text= 'S21', command = handler_s21_plt, state = 'normal', bg="green", fg="black", font = 'Helvetica 18 bold')
 s21_btn.grid(row = 0, column = 6, padx = 10, pady = 5)
 
+
+
 #initialize the timer
 hours_took = 0
 scan_running = False
@@ -1369,12 +1518,6 @@ if DEBUG == False:
     tp_head_resets(tp_reset_btn, tilt_entry_txt, pan_entry_txt, ser_rambo)
     mpcnc_pos_read.m114_output_static = ""
     ser_rambo.write(("M92 Z2267.72").encode() + b'\n') # Setting the Z Tower steps_per_unit
-    
-#     vna_center_freq = float(vna_center_freq_entry_txt.get())
-#     vna_span = int(vna_span_entry_txt.get())
-#     vna_num_points = int(vna_sweep_pts_entry_txt.get())
-#     vna_init(vna_num_points, visa_vna, vna_center_freq, vna_span)
-
 
 ######################### end of code
 
