@@ -529,7 +529,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
         # initializing some values
         sampling_x_coordinates = np.arange(-vol_length/2, vol_length/2+vol_x_step, vol_x_step)
         sampling_y_coordinates = np.arange(-vol_width/2, vol_width/2+vol_y_step, vol_y_step)    
-        sampling_z_coordinates = np.arange(-vol_height/2, vol_height/2+vol_z_step, vol_z_step)   
+        sampling_z_coordinates = np.arange(0, vol_height+vol_z_step, vol_z_step)   
     else:
         sampling_x_coordinates = []
         sampling_y_coordinates = []
@@ -581,8 +581,9 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
         
         # print("#Rev:{}".format(sampling_x_coordinates_rev))
         
-        # sampling_x_coordinates = []
-        sampling_y_coordinates = []
+        sampling_x_coordinates = [] # Only sweeping over positive coordinates
+        sampling_y_coordinates = [] # Only sweeping over positve coordinates
+        sampling_z_coordinates = [] # Only sweeping over positve coordinates
         sampling_x_coordinates.append(0.0)
         sampling_y_coordinates.append(0.0)
         sampling_z_coordinates.append(0.0)
