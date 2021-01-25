@@ -47,7 +47,7 @@ if DEBUG == False:
     rm = visa.ResourceManager()
     visa_vna = rm.open_resource('GPIB0::16')
     print("VNA: {}".format(visa_vna.query('*IDN?')))
-    ser_rambo = serial.Serial('COM6', 250000, timeout=1.0) # name of port, this might be different because of the hub we use
+    ser_rambo = serial.Serial('COM3', 250000, timeout=1.0) # name of port, this might be different because of the hub we use
 #     ser_rambo.baudrate = 250000
     print("RAMBo Controller for MPCNC: {}".format(ser_rambo.name))
     print("\n10sec Delay for Marlin Boot-up...")
