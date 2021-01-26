@@ -356,7 +356,11 @@ def handler_od_vol_setup():
     coil_od = float(od_vol_od_entry_txt.get())
     od_vol_critical_coupling_multplier = float(od_vol_critical_coupling_multplier_entry_txt.get())
     vol_max = str(np.rint((od_vol_critical_coupling_multplier*np.sqrt(2)*coil_od)/10)*10)
-    
+
+    if float(od_vol_min_step_entry_txt.get()) > coil_od/2:
+        messagebox.showerror("Bounds Error", "Min Step must be Smaller Than Coil Radius ({}mm)".format(coil_od/2))
+        return
+
     mpcnc_vol_length_entry_txt.set(vol_max)
     mpcnc_vol_width_entry_txt.set(vol_max)
     mpcnc_vol_height_entry_txt.set(vol_max)   
@@ -364,6 +368,80 @@ def handler_od_vol_setup():
     mpcnc_x_step_size_entry_txt.set(od_vol_min_step_entry_txt.get())
     mpcnc_y_step_size_entry_txt.set(od_vol_min_step_entry_txt.get())
     mpcnc_z_step_size_entry_txt.set(od_vol_min_step_entry_txt.get())
+
+    sampling_x_coordinates = []
+    sampling_y_coordinates = []
+    sampling_z_coordinates = [] 
+    od_vol_od = np.around(float(od_vol_od_entry_txt.get()),decimals=1)
+    od_vol_r = np.around(od_vol_od/2.0,decimals=1)
+    
+    scan_vol_to_coil_od = float(od_vol_critical_coupling_multplier_entry_txt.get())
+    # mpcnc_vol_length_entry_txt.set(str(scan_vol_to_coil_od*od_vol_od))
+    vol_length = float(mpcnc_vol_length_entry_txt.get())
+    critical_coupling_r = np.around(np.sqrt(2)*od_vol_r, decimals=1)
+    print("\n\nCritical Coupling Radius (mm): {}".format(critical_coupling_r))
+    
+    pos = np.around(-vol_length/2.0, decimals=1)
+    # print("pos: {}".format(pos))
+    sampling_x_coordinates.append(pos)
+    sampling_y_coordinates.append(pos)
+    sampling_z_coordinates.append(pos) 
+    min_step = float(od_vol_min_step_entry_txt.get())
+
+    mult = np.rint(BED_SIZE_X/2)
+    while pos < 0:     
+        _pos = pos + mult*min_step
+        # print("_pos: {}|(mult-1)*od_vol_r: {}".format(_pos, (mult-1)*od_vol_r))
+    #     if _pos == 0:
+    #         break;
+    #     if np.abs(_pos) < (mult-1)*critical_coupling_r and mult > 1:
+    #         mult -= 1
+    #     else:
+    #         pos += mult*min_step 
+    #         sampling_x_coordinates.append(pos)
+    #         sampling_y_coordinates.append(pos)
+    #         sampling_z_coordinates.append(pos)     
+        # if _pos >= 0 and (mult-1)*od_vol_r == 0:
+        #     break;
+        if np.abs(_pos) < (mult-1)*od_vol_r and mult > 1:
+            mult -= 1
+        else:
+            pos += mult*min_step
+            if pos < 0:
+                sampling_x_coordinates.append(np.around(pos, decimals=1))
+                sampling_y_coordinates.append(np.around(pos, decimals=1))
+                sampling_z_coordinates.append(np.around(pos, decimals=1))   
+            # print("Here:{}|{}".format(pos, mult))
+        
+    # print("#1:{}".format(sampling_x_coordinates))
+    
+    sampling_x_coordinates_rev = list(np.abs(list(reversed(sampling_x_coordinates))))
+    sampling_y_coordinates_rev = list(np.abs(list(reversed(sampling_y_coordinates))))
+    sampling_z_coordinates_rev = list(np.abs(list(reversed(sampling_z_coordinates))))
+    
+    # print("#Rev:{}".format(sampling_x_coordinates_rev))
+    
+    # sampling_x_coordinates = [] # Only sweeping over positive coordinates
+    sampling_y_coordinates = [] # Only sweeping over positve coordinates
+    sampling_z_coordinates = [] # Only sweeping over positve coordinates
+    sampling_x_coordinates.append(0.0)
+    sampling_y_coordinates.append(0.0)
+    sampling_z_coordinates.append(0.0)
+    
+    sampling_x_coordinates = sampling_x_coordinates + sampling_x_coordinates_rev
+    sampling_y_coordinates = sampling_y_coordinates + sampling_y_coordinates_rev
+    sampling_z_coordinates = sampling_z_coordinates + sampling_z_coordinates_rev
+    
+    # print("#1:{}".format(sampling_x_coordinates))
+    
+    print("x_coords: {}".format(sampling_x_coordinates))
+    print("y_coords: {}".format(sampling_y_coordinates))
+    print("z_coords: {}".format(sampling_z_coordinates))
+    
+    # print("Len: {}| hrs: {}".format(len(sampling_x_coordinates), 4*len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)/3600))
+    print("Len: {}| hrs: {}".format(len(sampling_x_coordinates), 11*4*len(sampling_x_coordinates)/3600))
+
+
     
 #NOTE: should probably clean this up and make the graphing more modular,
 # don't really need diff functions for each s param
@@ -372,13 +450,13 @@ def handler_s11_plt():
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
     dframe = pd.read_csv(filename_input + '.csv', delimiter=',')
-    x = np.asarray(dframe['X Pos'])
-    y = np.asarray(dframe['Y Pos'])
-    z = np.asarray(dframe['Z Pos'])
+    x = np.asarray(dframe['x_pos'])
+    y = np.asarray(dframe['y_pos'])
+    z = np.asarray(dframe['z_pos'])
     s11 = []
     # append the middle point to s11
     for i in range(len(dframe)):
-        arr =  df2['Re[S11]'][i]
+        arr =  df2['s11_logm'][i]
         arr = arr.strip("[]")
         arr = np.fromstring(arr, dtype = np.float, sep = ' ')
         mid = int(len(arr) / 2 - 0.5)
@@ -399,13 +477,13 @@ def handler_s12_plt():
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
     dframe = pd.read_csv(filename_input + '.csv', delimiter=',')
-    x = np.asarray(dframe['X Pos'])
-    y = np.asarray(dframe['Y Pos'])
-    z = np.asarray(dframe['Z Pos'])
+    x = np.asarray(dframe['x_pos'])
+    y = np.asarray(dframe['y_pos'])
+    z = np.asarray(dframe['z_pos'])
     s12 = []
     # append the middle point to s12
     for i in range(len(dframe)):
-        arr =  df2['Re[S12]'][i]
+        arr =  df2['s12_logm'][i]
         arr = arr.strip("[]")
         arr = np.fromstring(arr, dtype = np.float, sep = ' ')
         mid = int(len(arr) / 2 - 0.5)
@@ -427,13 +505,13 @@ def handler_s22_plt():
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
     dframe = pd.read_csv(filename_input + '.csv', delimiter=',')
-    x = np.asarray(dframe['X Pos'])
-    y = np.asarray(dframe['Y Pos'])
-    z = np.asarray(dframe['Z Pos'])
+    x = np.asarray(dframe['x_pos'])
+    y = np.asarray(dframe['y_pos'])
+    z = np.asarray(dframe['z_pos'])
     s22 = []
     # append the middle point to s22
     for i in range(len(dframe)):
-        arr =  df2['Re[S22]'][i]
+        arr =  df2['s22_logm'][i]
         arr = arr.strip("[]")
         arr = np.fromstring(arr, dtype = np.float, sep = ' ')
         mid = int(len(arr) / 2 - 0.5)
@@ -457,13 +535,13 @@ def handler_s21_plt():
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection = '3d')
     dframe = pd.read_csv(filename_input + '.csv', delimiter=',')
-    x = np.asarray(dframe['X Pos'])
-    y = np.asarray(dframe['Y Pos'])
-    z = np.asarray(dframe['Z Pos'])
+    x = np.asarray(dframe['x_pos'])
+    y = np.asarray(dframe['y_pos'])
+    z = np.asarray(dframe['z_pos'])
     s21 = []
     # append the middle point to s21
     for i in range(len(dframe)):
-        arr =  df2['Re[S21]'][i]
+        arr =  df2['s21_logm'][i]
         arr = arr.strip("[]")
         arr = np.fromstring(arr, dtype = np.float, sep = ' ')
         mid = int(len(arr) / 2 - 0.5)
@@ -499,19 +577,19 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     run_num = 0
     
     #getting user inputs
-    vol_length = int(mpcnc_vol_length_entry_txt.get())
+    vol_length = np.around(float(mpcnc_vol_length_entry_txt.get()), 1)
     print("Length: " + str(vol_length))
-    vol_x_step = int(mpcnc_x_step_size_entry_txt.get())
+    vol_x_step = np.around(float(mpcnc_x_step_size_entry_txt.get()), 1)
     
-    vol_width = int(mpcnc_vol_width_entry_txt.get())
+    vol_width = np.around(float(mpcnc_vol_width_entry_txt.get()), 1)
     print("Width: " + str(vol_width))
-    vol_y_step = int(mpcnc_y_step_size_entry_txt.get())
+    vol_y_step = np.around(float(mpcnc_y_step_size_entry_txt.get()), 1)
        
-    vol_height = int(mpcnc_vol_height_entry_txt.get())
+    vol_height = np.around(float(mpcnc_vol_height_entry_txt.get()), 1)
     print("Height: " + str(vol_height))
-    vol_z_step = int(mpcnc_z_step_size_entry_txt.get())
+    vol_z_step = np.around(float(mpcnc_z_step_size_entry_txt.get()), 1)
     
-    mpcnc_pause_dur = float(mpcnc_dwell_duration_entry_txt.get())
+    mpcnc_pause_dur = np.around(float(mpcnc_dwell_duration_entry_txt.get()), 1)
     
     vna_center_freq = float(vna_center_freq_entry_txt.get())
     vna_span = int(vna_span_entry_txt.get())
@@ -531,28 +609,26 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
         sampling_y_coordinates = np.arange(-vol_width/2, vol_width/2+vol_y_step, vol_y_step)    
         sampling_z_coordinates = np.arange(0, vol_height+vol_z_step, vol_z_step)   
     else:
-        sampling_x_coordinates = []
-        sampling_y_coordinates = []
-        sampling_z_coordinates = [] 
-        od_vol_od = np.around(float(od_vol_od_entry_txt.get(),decimals=1))
+        od_vol_od = np.around(float(od_vol_od_entry_txt.get()),decimals=1)
         od_vol_r = np.around(od_vol_od/2.0,decimals=1)
         
-        scan_vol_to_coil_od = 3
-        mpcnc_vol_length_entry_txt.set(str(scan_vol_to_coil_od*od_vol_od))
+        scan_vol_to_coil_od = float(od_vol_critical_coupling_multplier_entry_txt.get())
+        # mpcnc_vol_length_entry_txt.set(str(scan_vol_to_coil_od*od_vol_od))
         vol_length = float(mpcnc_vol_length_entry_txt.get())
         critical_coupling_r = np.around(np.sqrt(2)*od_vol_r, decimals=1)
-        print("Critical Coupling Radius (mm): {}".format(critical_coupling_r))
+        # print("\n\nCritical Coupling Radius (mm): {}".format(critical_coupling_r))
         
         pos = np.around(-vol_length/2.0, decimals=1)
+        # print("pos: {}".format(pos))
         sampling_x_coordinates.append(pos)
         sampling_y_coordinates.append(pos)
         sampling_z_coordinates.append(pos) 
         min_step = float(od_vol_min_step_entry_txt.get())
 
-        mult = BED_SIZE_X
+        mult = np.rint(BED_SIZE_X/2)
         while pos < 0:     
             _pos = pos + mult*min_step
-#             print("_pos: {}|mult*cc: {}".format(_pos, (mult-1)*critical_coupling_r))
+            # print("_pos: {}|(mult-1)*od_vol_r: {}".format(_pos, (mult-1)*od_vol_r))
         #     if _pos == 0:
         #         break;
         #     if np.abs(_pos) < (mult-1)*critical_coupling_r and mult > 1:
@@ -562,16 +638,17 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
         #         sampling_x_coordinates.append(pos)
         #         sampling_y_coordinates.append(pos)
         #         sampling_z_coordinates.append(pos)     
-            if _pos == 0:
-                break;
+            # if _pos >= 0 and (mult-1)*od_vol_r == 0:
+            #     break;
             if np.abs(_pos) < (mult-1)*od_vol_r and mult > 1:
                 mult -= 1
             else:
                 pos += mult*min_step
-                sampling_x_coordinates.append(np.around(pos, decimals=1))
-                sampling_y_coordinates.append(np.around(pos, decimals=1))
-                sampling_z_coordinates.append(np.around(pos, decimals=1))   
-#             print(pos, mult)
+                if pos < 0:
+                    sampling_x_coordinates.append(np.around(pos, decimals=1))
+                    sampling_y_coordinates.append(np.around(pos, decimals=1))
+                    sampling_z_coordinates.append(np.around(pos, decimals=1))   
+                # print("Here:{}|{}".format(pos, mult))
             
         # print("#1:{}".format(sampling_x_coordinates))
         
@@ -581,7 +658,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
         
         # print("#Rev:{}".format(sampling_x_coordinates_rev))
         
-        sampling_x_coordinates = [] # Only sweeping over positive coordinates
+        # sampling_x_coordinates = [] # Only sweeping over positive coordinates
         sampling_y_coordinates = [] # Only sweeping over positve coordinates
         sampling_z_coordinates = [] # Only sweeping over positve coordinates
         sampling_x_coordinates.append(0.0)
@@ -591,15 +668,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
         sampling_x_coordinates = sampling_x_coordinates + sampling_x_coordinates_rev
         sampling_y_coordinates = sampling_y_coordinates + sampling_y_coordinates_rev
         sampling_z_coordinates = sampling_z_coordinates + sampling_z_coordinates_rev
-        
-        # print("#1:{}".format(sampling_x_coordinates))
-        
-        print("x_coords: {}".format(sampling_x_coordinates))
-        print("y_coords: {}".format(sampling_y_coordinates))
-        print("z_coords: {}".format(sampling_z_coordinates))
-        
-#         print("Len: {}| hrs: {}".format(len(sampling_x_coordinates), 4*len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)/3600))
-    
+            
     s11_array = np.array([])
     s12_array = np.array([])
     s21_array = np.array([])
@@ -610,27 +679,34 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     
     # data_array_dimensions: 
     #    [Run #][Measurement #]
-    #    [X Pos][Y Pos][Z Pos]
+    #    [x_pos][y_pos][z_pos]
     #    [Tilt Angle (deg)][Pan Angle (deg)]
     #    [Center Frequency]
-    #    [S11], Re[S11], Im[S11]
-    #    [S12], Re[S12], Im[S12]
-    #    [S21], Re[S21], Im[S21]
-    #    [S22], Re[S22], Im[S22]
-    data_rec = np.zeros((len(sampling_x_coordinates),len(sampling_y_coordinates),len(sampling_z_coordinates),25),dtype=np.float32)
+    #    s11_logm, s11_re, s11_im
+    #    s12_logm, s12_re, s12_im
+    #    s21_logm, s21_re, s21_im
+    #    s22_logm, s22_re, s22_im
+    data_rec = np.zeros((len(sampling_x_coordinates),len(sampling_y_coordinates),len(sampling_z_coordinates),26),dtype=np.float32)
     print("Data Shape: {}| Memory Footprint: {}kB".format(np.shape(data_rec), round(float(data_rec.size*data_rec.itemsize)/1024), 3))
 
     firstRun = 0;
 
-    num_meas = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
+    # num_meas = len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)
+    num_meas = 11*len(sampling_x_coordinates)
 
-    measurements = {'run_number': [], 'measurement_number': [], 'tilt_angle': [], 'pan_angle': [],\
-                    'z_endstop_height': [], 'coil_height': [], 'x_offset': [], 'y_offset': [], 'z_offset': [],\
-                    'x_pos': [], 'y_pos': [], 'z_pos': [], 's11_logm':[], 's11_re':[], 's11_im':[],\
-                    's12_logm':[], 's12_re':[], 's12_im':[], 's21_logm':[], 's21_re':[], 's21_im':[],\
-                    's22_logm':[], 's22_re':[], 's22_im':[], 'b_field': []}
+    measurements = {'run_number': [], 'measurement_number': [],\
+                    'tilt_angle': [], 'pan_angle': [],\
+                    'z_endstop_height': [], 'coil_height': [],\
+                    'x_offset': [], 'y_offset': [], 'z_offset': [],\
+                    'x_pos': [], 'y_pos': [], 'z_pos': [],\
+                    'vna_center_freq':[],\
+                    's11_logm':[], 's11_re':[], 's11_im':[],\
+                    's12_logm':[], 's12_re':[], 's12_im':[],\
+                    's21_logm':[], 's21_re':[], 's21_im':[],\
+                    's22_logm':[], 's22_re':[], 's22_im':[],\
+                    'b_field': []}
 
-    s_parameters_measured = 4
+    s_parameters_measured = 8
     record_time_avg=0.001
     move_dur_avg = 2.5 #seconds
     if mpcnc_pause_dur > move_dur_avg:
@@ -798,178 +874,187 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
             
             for _x_count, x_coord in enumerate(_sampling_x_coordinates): # moves the tool to each successive sampling spot in the row
                 
-                manual_x_entry_txt.set(str(round(x_coord,3)))
-#                 print("x_coord = {}".format(x_coord))
-                
-                time_0 = time.time()
-                mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
-                   manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
-                if mpcnc_pause_dur > vna_read_avg_dur+data_record_avg_dur:
-                    mpcnc_pause(mpcnc_pause_dur-(vna_read_avg_dur+data_record_avg_dur), ser_rambo) 
-                time_1 = time.time()
-                
-                time_diff = time_1-time_0
-                if meas_count == 0:
-                    mpcnc_move_avg_dur = time_diff
-                else:
-                    mpcnc_move_avg_dur = float(mpcnc_move_avg_dur+time_diff)/2 # Running average
-                
-                time_0 = time.time()
-                s11_logm = vna_record(vna_num_points, 'S11', 'LOGM', visa_vna) #magnitude value
-                s12_logm = vna_record(vna_num_points, 'S12', 'LOGM', visa_vna)
-                s21_logm = vna_record(vna_num_points, 'S21', 'LOGM', visa_vna)
-                s22_logm = vna_record(vna_num_points, 'S22', 'LOGM', visa_vna)
-                
-                s11_re, s11_im = 0, 0
-                s12_re, s12_im = 0, 0
-                s21_re, s21_im = 0, 0
-                s22_re, s22_im = 0, 0
-                
-#                 s11_re, s11_im = vna_record(vna_num_points, 'S11', 'SMIMRI', visa_vna) #magnitude value
-#                 s12_re, s12_im = vna_record(vna_num_points, 'S12', 'SMIMRI', visa_vna)
-#                 s21_re, s21_im = vna_record(vna_num_points, 'S21', 'SMIMRI', visa_vna)
-#                 s22_re, s22_im = vna_record(vna_num_points, 'S22', 'SMIMRI', visa_vna)
-                time_1 = time.time()
-                time_diff = time_1-time_0
-                if meas_count == 0:
-                    vna_read_avg_dur = time_diff
-                else:
-                    vna_read_avg_dur = float(vna_read_avg_dur+time_diff)/2 # Running average
-                  
-                if x_positive_direction:
-                    x_count = _x_count
-                else:
-                    x_count = len(_sampling_x_coordinates)-_x_count-1
-#                 print("S11: ", value, "\nS12: ", value2, "\nS21: ", value3, "\nS22: ", value4, "\n\n")
-                
-                time_0 = time.time()
-                
-                b_field = 0.00181026*np.sqrt(10 ** (s21_logm/10))
-                
-                data_rec[x_count, y_count, z_count, 0] = run_num
-                data_rec[x_count, y_count, z_count, 1] = meas_count
-                data_rec[x_count, y_count, z_count, 2] = float(tilt_entry_txt.get())
-                data_rec[x_count, y_count, z_count, 3] = float(pan_entry_txt.get())
-                data_rec[x_count, y_count, z_count, 4] = Z_ENDSTOP_HEIGHT_MM
-                data_rec[x_count, y_count, z_count, 5] = float(od_vol_coil_h_entry_txt.get())
-                data_rec[x_count, y_count, z_count, 6] = mpcnc_move_xyz.x_offset
-                data_rec[x_count, y_count, z_count, 7] = mpcnc_move_xyz.y_offset
-                data_rec[x_count, y_count, z_count, 8] = mpcnc_move_xyz.z_offset                
-                data_rec[x_count, y_count, z_count, 9] = x_coord
-                data_rec[x_count, y_count, z_count, 10] = y_coord
-                data_rec[x_count, y_count, z_count, 11] = z_coord
-
-                data_rec[x_count, y_count, z_count, 12] = vna_center_freq
-                data_rec[x_count, y_count, z_count, 13] = s11_logm
-                data_rec[x_count, y_count, z_count, 14] = s11_re
-                data_rec[x_count, y_count, z_count, 15] = s11_im
-                data_rec[x_count, y_count, z_count, 16] = s12_logm
-                data_rec[x_count, y_count, z_count, 17] = s12_re
-                data_rec[x_count, y_count, z_count, 18] = s12_im
-                data_rec[x_count, y_count, z_count, 19] = s21_logm
-                data_rec[x_count, y_count, z_count, 20] = s21_re
-                data_rec[x_count, y_count, z_count, 21] = s21_im
-                data_rec[x_count, y_count, z_count, 22] = s22_logm
-                data_rec[x_count, y_count, z_count, 23] = s22_re
-                data_rec[x_count, y_count, z_count, 24] = s22_im
-                
-                data_rec[x_count, y_count, z_count, 25] = b_field
-                
-                x_coords = np.concatenate([x_coords, np.array([x_coord])])
-                y_coords = np.concatenate([y_coords, np.array([y_coord])])
-                z_coords = np.concatenate([z_coords, np.array([z_coord])])
-  
-                s11_array = np.concatenate([s11_array, np.array([s11_logm])])
-                s12_array = np.concatenate([s12_array, np.array([s12_logm])])
-                s21_array = np.concatenate([s21_array, np.array([s21_logm])])
-                s22_array = np.concatenate([s22_array, np.array([s22_logm])])
-                #plotting 
-  
-#                 f.write(str(x_coord) + "," + str(y_coord) + "," + str(z_coord) + "," + str(value))
-#                 f.write("," + str(value2) + "," + str(value3) + "," + str(value4)) 
-#                 f.write("\n")
-
-                # ToDo: might need to update how things are graphed
-
-                # currently run number is always set to 1
-                measurements['run_number'].append(1)
-
-                measurements['measurement_number'].append(meas_count + 1)
-                
-                measurements['tilt_angle'].append(float(tilt_entry_txt.get())) 
-                measurements['pan_angle'].append(float(pan_entry_txt.get()))
-                
-                measurements['z_endstop_height'] = Z_ENDSTOP_HEIGHT_MM
-                measurements['coil_height'] = float(od_vol_coil_h_entry_txt.get())
-                measurements['x_offset'].append(mpcnc_move_xyz.x_offset)
-                measurements['y_offset'].append(mpcnc_move_xyz.y_offset)
-                measurements['z_offset'].append(mpcnc_move_xyz.z_offset)                
-                measurements['x_pos'].append(x_coord)
-                measurements['y_pos'].append(y_coord)
-                measurements['z_pos'].append(z_coord)
-
-                measurements['s11_logm'].append(s11_logm)
-                measurements['s11_re'].append(s11_re)
-                measurements['s11_im'].append(s11_im)
-                
-                measurements['s12_logm'].append(s12_logm)
-                measurements['s12_re'].append(s12_re)
-                measurements['s12_im'].append(s12_im)
-                
-                measurements['s21_logm'].append(s21_logm)
-                measurements['s21_re'].append(s21_re)
-                measurements['s21_im'].append(s21_im)
-                
-                measurements['s22_logm'].append(s22_logm)
-                measurements['s22_re'].append(s22_re)
-                measurements['s22_im'].append(s22_im)
-
-                measurements['b_field'].append(b_field) # B field from S21 as recorded by the Beehive 100b
-
-                if (z_coord != _z_coord) or (z_coord == sampling_z_coordinates[0]): # only plot when z_coord changes or during the first layer
-                    if(meas_count != 0):
-                        colorbar1.remove()
-                        colorbar2.remove()
-                        colorbar3.remove()
-                        colorbar4.remove()
+                # if (x_coord == y_coord == z_coord) or (x_coord == 0 and y_coord == 0) or (x_coord == 0 and z_coord == 0) or (y_coord == 0 and z_coord == 0):
+                pos_r = np.sqrt(x_coord**2+y_coord**2+z_coord**2)
+                max_pos = np.max([np.abs(x_coord), np.abs(y_coord), np.abs(z_coord)])
+                if pos_r == np.sqrt(3*max_pos**2) or pos_r == np.sqrt(2*max_pos**2) or np.abs(pos_r) == max_pos:
+                    manual_x_entry_txt.set(str(round(x_coord,3)))
+    #                 print("x_coord = {}".format(x_coord))
                     
-                    ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
-                    colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
-                    colorbar1.set_label('dB')
+                    time_0 = time.time()
+                    mpcnc_move_xyz(manual_x_entry_txt, manual_y_entry_txt,\
+                       manual_z_entry_txt, manual_speed_entry_txt, scan_running, ser_rambo)
+                    if mpcnc_pause_dur > vna_read_avg_dur+data_record_avg_dur:
+                        mpcnc_pause(mpcnc_pause_dur-(vna_read_avg_dur+data_record_avg_dur), ser_rambo) 
+                    time_1 = time.time()
                     
-                    ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
-                    colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
-                    colorbar2.set_label('dB')
+                    time_diff = time_1-time_0
+                    if meas_count == 0:
+                        mpcnc_move_avg_dur = time_diff
+                    else:
+                        mpcnc_move_avg_dur = float(mpcnc_move_avg_dur+time_diff)/2 # Running average
                     
-                    ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
-                    colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
-                    colorbar3.set_label('dB')
+                    time_0 = time.time()
+                    s11_logm = vna_record(vna_num_points, 'S11', 'LOGM', visa_vna) #magnitude value
+                    s12_logm = vna_record(vna_num_points, 'S12', 'LOGM', visa_vna)
+                    s21_logm = vna_record(vna_num_points, 'S21', 'LOGM', visa_vna)
+                    s22_logm = vna_record(vna_num_points, 'S22', 'LOGM', visa_vna)
                     
-                    ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet')
-                    colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
-                    colorbar4.set_label('dB')    
+                    # s11_re, s11_im = 0, 0
+                    # s12_re, s12_im = 0, 0
+                    # s21_re, s21_im = 0, 0
+                    # s22_re, s22_im = 0, 0
                     
-                    plt.pause(0.01)
-                    
-                    _z_coord = z_coord
-                
-                time_1 = time.time()
-                time_diff = time_1-time_0
-                if meas_count == 0:
-                    data_record_avg_dur = time_diff
-                else:
-                    data_record_avg_dur = float(data_record_avg_dur+time_diff)/2 # Running average
+                    s11_re, s11_im = vna_record(vna_num_points, 'S11', 'SMIMRI', visa_vna) #magnitude value
+                    s12_re, s12_im = vna_record(vna_num_points, 'S12', 'SMIMRI', visa_vna)
+                    s21_re, s21_im = vna_record(vna_num_points, 'S21', 'SMIMRI', visa_vna)
+                    s22_re, s22_im = vna_record(vna_num_points, 'S22', 'SMIMRI', visa_vna)
 
-                # increment 
-                meas_count += 1
-                
-                percent_complete = round(100*float(meas_count)/num_meas,2)
-                
-                now = time.time()
-                duration_took = now-then
-                time_per_meas = duration_took/meas_count
-                time_remaining = (num_meas-meas_count)*time_per_meas
-                hrs_mins_secs_remaining = datetime.timedelta(0, time_remaining)
+                    time_1 = time.time()
+                    time_diff = time_1-time_0
+                    if meas_count == 0:
+                        vna_read_avg_dur = time_diff
+                    else:
+                        vna_read_avg_dur = float(vna_read_avg_dur+time_diff)/2 # Running average
+                      
+                    if x_positive_direction:
+                        x_count = _x_count
+                    else:
+                        x_count = len(_sampling_x_coordinates)-_x_count-1
+    #                 print("S11: ", value, "\nS12: ", value2, "\nS21: ", value3, "\nS22: ", value4, "\n\n")
+                    
+                    time_0 = time.time()
+                    
+                    b_field = 0.00181026*np.sqrt(10 ** (s21_logm/10))
+                    
+                    data_rec[x_count, y_count, z_count, 0] = run_num
+                    data_rec[x_count, y_count, z_count, 1] = meas_count
+
+                    data_rec[x_count, y_count, z_count, 2] = float(tilt_entry_txt.get())
+                    data_rec[x_count, y_count, z_count, 3] = float(pan_entry_txt.get())
+
+                    data_rec[x_count, y_count, z_count, 4] = Z_ENDSTOP_HEIGHT_MM
+                    data_rec[x_count, y_count, z_count, 5] = float(od_vol_coil_h_entry_txt.get())
+                    data_rec[x_count, y_count, z_count, 6] = mpcnc_move_xyz.x_offset
+                    data_rec[x_count, y_count, z_count, 7] = mpcnc_move_xyz.y_offset
+                    data_rec[x_count, y_count, z_count, 8] = mpcnc_move_xyz.z_offset                
+                    data_rec[x_count, y_count, z_count, 9] = x_coord
+                    data_rec[x_count, y_count, z_count, 10] = y_coord
+                    data_rec[x_count, y_count, z_count, 11] = z_coord
+
+                    data_rec[x_count, y_count, z_count, 12] = vna_center_freq
+                    data_rec[x_count, y_count, z_count, 13] = s11_logm
+                    data_rec[x_count, y_count, z_count, 14] = s11_re
+                    data_rec[x_count, y_count, z_count, 15] = s11_im
+                    data_rec[x_count, y_count, z_count, 16] = s12_logm
+                    data_rec[x_count, y_count, z_count, 17] = s12_re
+                    data_rec[x_count, y_count, z_count, 18] = s12_im
+                    data_rec[x_count, y_count, z_count, 19] = s21_logm
+                    data_rec[x_count, y_count, z_count, 20] = s21_re
+                    data_rec[x_count, y_count, z_count, 21] = s21_im
+                    data_rec[x_count, y_count, z_count, 22] = s22_logm
+                    data_rec[x_count, y_count, z_count, 23] = s22_re
+                    data_rec[x_count, y_count, z_count, 24] = s22_im
+                    
+                    data_rec[x_count, y_count, z_count, 25] = b_field
+                    
+                    x_coords = np.concatenate([x_coords, np.array([x_coord])])
+                    y_coords = np.concatenate([y_coords, np.array([y_coord])])
+                    z_coords = np.concatenate([z_coords, np.array([z_coord])])
+      
+                    s11_array = np.concatenate([s11_array, np.array([s11_logm])])
+                    s12_array = np.concatenate([s12_array, np.array([s12_logm])])
+                    s21_array = np.concatenate([s21_array, np.array([s21_logm])])
+                    s22_array = np.concatenate([s22_array, np.array([s22_logm])])
+                    #plotting 
+      
+    #                 f.write(str(x_coord) + "," + str(y_coord) + "," + str(z_coord) + "," + str(value))
+    #                 f.write("," + str(value2) + "," + str(value3) + "," + str(value4)) 
+    #                 f.write("\n")
+
+                    # ToDo: might need to update how things are graphed
+
+                    # currently run number is always set to 1
+                    measurements['run_number'].append(1)
+
+                    measurements['measurement_number'].append(meas_count + 1)
+                    
+                    measurements['tilt_angle'].append(float(tilt_entry_txt.get())) 
+                    measurements['pan_angle'].append(float(pan_entry_txt.get()))
+                    
+                    measurements['z_endstop_height'] = Z_ENDSTOP_HEIGHT_MM
+                    measurements['coil_height'] = float(od_vol_coil_h_entry_txt.get())
+                    measurements['x_offset'].append(mpcnc_move_xyz.x_offset)
+                    measurements['y_offset'].append(mpcnc_move_xyz.y_offset)
+                    measurements['z_offset'].append(mpcnc_move_xyz.z_offset)                
+                    measurements['x_pos'].append(x_coord)
+                    measurements['y_pos'].append(y_coord)
+                    measurements['z_pos'].append(z_coord)
+
+                    measurements['vna_center_freq'].append(vna_center_freq)
+
+                    measurements['s11_logm'].append(s11_logm)
+                    measurements['s11_re'].append(s11_re)
+                    measurements['s11_im'].append(s11_im)
+                    
+                    measurements['s12_logm'].append(s12_logm)
+                    measurements['s12_re'].append(s12_re)
+                    measurements['s12_im'].append(s12_im)
+                    
+                    measurements['s21_logm'].append(s21_logm)
+                    measurements['s21_re'].append(s21_re)
+                    measurements['s21_im'].append(s21_im)
+                    
+                    measurements['s22_logm'].append(s22_logm)
+                    measurements['s22_re'].append(s22_re)
+                    measurements['s22_im'].append(s22_im)
+
+                    measurements['b_field'].append(b_field) # B field from S21 as recorded by the Beehive 100b
+
+                    if (z_coord != _z_coord) or (z_coord == sampling_z_coordinates[0]): # only plot when z_coord changes or during the first layer
+                        if(meas_count != 0):
+                            colorbar1.remove()
+                            colorbar2.remove()
+                            colorbar3.remove()
+                            colorbar4.remove()
+                        
+                        ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
+                        colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
+                        colorbar1.set_label('dB')
+                        
+                        ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
+                        colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
+                        colorbar2.set_label('dB')
+                        
+                        ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
+                        colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
+                        colorbar3.set_label('dB')
+                        
+                        ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet')
+                        colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
+                        colorbar4.set_label('dB')    
+                        
+                        plt.pause(0.01)
+                        
+                        _z_coord = z_coord
+                    
+                    time_1 = time.time()
+                    time_diff = time_1-time_0
+                    if meas_count == 0:
+                        data_record_avg_dur = time_diff
+                    else:
+                        data_record_avg_dur = float(data_record_avg_dur+time_diff)/2 # Running average
+
+                    # increment 
+                    meas_count += 1
+                    
+                    percent_complete = round(100*float(meas_count)/num_meas,2)
+                    
+                    now = time.time()
+                    duration_took = now-then
+                    time_per_meas = duration_took/meas_count
+                    time_remaining = (num_meas-meas_count)*time_per_meas
+                    hrs_mins_secs_remaining = datetime.timedelta(0, time_remaining)
                  
 
                 #ToDo: Running average of time to completion
