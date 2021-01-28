@@ -8,6 +8,10 @@ from tkinter import ttk
 import tkinter as tk
 import time
 
+BED_SIZE_X = 600
+BED_SIZE_Y = 600
+BED_SIZE_Z = 300
+
 """
 @brief Commands the MPCNC to move to a given (x, y, z) position with G-code
 
@@ -56,10 +60,35 @@ def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, scan_
     ser_rambo.write(("G0"+" F" + str(float(speed_entry_txt.get())/4) + " Z" + z_loc_write).encode() + b'\n')
     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
     
-    ser_rambo.write(("G0"+" F" + speed_entry_txt.get() + " X" + x_loc_write +\
-                     " Y" + y_loc_write).encode() + b'\n')
+    x_step = abs(mpcnc_move_xyz.x_loc-x_loc_write)
+    y_step = abs(mpcnc_move_xyz.y_loc-y_loc_write)
+    max_step = np.max([x_step, y_step])
+
+    #Decreasing the Speed for small movements
+    # From Configuration.h
+    # * DEFAULT_MAX_FEEDRATE[X, Y, Z, E0] = { 50, 50, 15, 25 } mm/s = {3000, 3000, 900, _} mm/min
+    max_xy_speed = 3000 #mm/min    
+    # if x_step == y_step:
+    #     speed_write =  speed_entry_txt.get()
+    # else:
+    #     speed_write = str(np.rint(float(speed_entry_txt.get())*max_step/float(BED_SIZE_X)))
+    speed_write =  np.rint(float(speed_entry_txt.get()))
+    speed_write_str = str(np.min([max_xy_speed, speed_write]))
+
+    #Decreasing the XY acceleration for small movements
+    # From Configuration.h
+    #define DEFAULT_MAX_ACCELERATION      { 180, 180, 80, 180 } (mm/s^2)
+    #define DEFAULT_TRAVEL_ACCELERATION   180    // X, Y, Z acceleration for travel (non printing) moves
+    max_xy_travel_accel = 180
+    travel_accel = np.rint(max_xy_travel_accel*max_step/float(5))
+    travel_accel_str = str(np.min([max_xy_travel_accel, travel_accel]))
+
+    ser_rambo.write(("M204"+" T" + travel_accel_str).encode() + b'\n')
+
+    ser_rambo.write(("G0"+" F" + speed_write_str + " X" + x_loc_write +\
+        " Y" + y_loc_write).encode() + b'\n')
     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
-    
+   
     x_loc_read, y_loc_read, z_loc_read = mpcnc_pos_read(scan_running, ser_rambo)
     mpcnc_move_xyz.x_loc = round(x_loc_read,3)
     mpcnc_move_xyz.y_loc = round(y_loc_read,3)

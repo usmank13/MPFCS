@@ -877,7 +877,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 # if (x_coord == y_coord == z_coord) or (x_coord == 0 and y_coord == 0) or (x_coord == 0 and z_coord == 0) or (y_coord == 0 and z_coord == 0):
                 pos_r = np.sqrt(x_coord**2+y_coord**2+z_coord**2)
                 max_pos = np.max([np.abs(x_coord), np.abs(y_coord), np.abs(z_coord)])
-                if pos_r >= 0:
+                if pos_r >= 0: # Should always be true
                 # if pos_r == np.sqrt(3*max_pos**2) or pos_r == np.sqrt(2*max_pos**2) or np.abs(pos_r) == max_pos:
                     manual_x_entry_txt.set(str(round(x_coord,3)))
     #                 print("x_coord = {}".format(x_coord))
