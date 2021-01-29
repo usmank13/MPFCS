@@ -7,6 +7,7 @@
 from tkinter import ttk
 import tkinter as tk
 import time
+import numpy as np
 
 BED_SIZE_X = 600
 BED_SIZE_Y = 600
@@ -59,9 +60,8 @@ def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, scan_
 #     print("1: z_entry, z_offset = {}, {}".format(z_entry_txt.get(), str(mpcnc_move_xyz.z_offset)))
     ser_rambo.write(("G0"+" F" + str(float(speed_entry_txt.get())/4) + " Z" + z_loc_write).encode() + b'\n')
     ser_rambo.write(("M400").encode() + b'\n') # Wait for "Movement Complete" response
-    
-    x_step = abs(mpcnc_move_xyz.x_loc-x_loc_write)
-    y_step = abs(mpcnc_move_xyz.y_loc-y_loc_write)
+    x_step = abs(mpcnc_move_xyz.x_loc-float(x_loc_write))
+    y_step = abs(mpcnc_move_xyz.y_loc-float(y_loc_write))
     max_step = np.max([x_step, y_step])
 
     #Decreasing the Speed for small movements
@@ -82,7 +82,6 @@ def mpcnc_move_xyz(x_entry_txt, y_entry_txt, z_entry_txt, speed_entry_txt, scan_
     max_xy_travel_accel = 180
     travel_accel = np.rint(max_xy_travel_accel*max_step/float(5))
     travel_accel_str = str(np.min([max_xy_travel_accel, travel_accel]))
-
     ser_rambo.write(("M204"+" T" + travel_accel_str).encode() + b'\n')
 
     ser_rambo.write(("G0"+" F" + speed_write_str + " X" + x_loc_write +\
