@@ -26,6 +26,9 @@ import tkinter as tk
 import matplotlib.pyplot as plt 
 from mpl_toolkits.mplot3d import Axes3D
 
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 from Frontend.mpfcs_gui_button_functions import submit_values, vna_buttons_reset
 from Backend.mpfcs_vna import vna_init, vna_record#, vna_q_calc
 from Backend.mpfcs_tp_head import tp_head_tilt, tp_head_pan, tp_head_resets, tp_usecs_2_deg
@@ -709,7 +712,8 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                     's21_logm':[], 's21_re':[], 's21_im':[],\
                     's22_logm':[], 's22_re':[], 's22_im':[],\
                     'b_field': []}
-	df = pd.DataFrame(measurements)
+    
+    df = pd.DataFrame(measurements)
     # with open(save_file_name+"_df.csv", "w") as f:
     #     df.to_csv(f)                    
 
@@ -730,37 +734,40 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
     vna_init(vna_num_points, visa_vna, vna_center_freq, vna_span)
 
     #3D plots for S11, S12, S21, S22
-    s_param_fig=plt.figure(1)
-#     plt.ion()
-#     plt.show()
-    s_param_fig.tight_layout(pad=3.0)
-    ax1 = s_param_fig.add_subplot(221, projection = '3d')
-    ax1.set_title('S11')
-    ax1.set_xlabel('X Position (mm)')
-    ax1.set_ylabel('Y Position (mm)')
-    ax1.set_zlabel('Z Position (mm)')
-    ax1.view_init(elev=30, azim=30)
- 
-    ax2 = s_param_fig.add_subplot(222, projection = '3d')
-    ax2.set_title('S12')
-    ax2.set_xlabel('X Position (mm)')
-    ax2.set_ylabel('Y Position (mm)')
-    ax2.set_zlabel('Z Position (mm)')
-    ax2.view_init(elev=30, azim=30)
-     
-    ax3 = s_param_fig.add_subplot(223, projection = '3d')
-    ax3.set_title('S21')
-    ax3.set_xlabel('X Position (mm)')
-    ax3.set_ylabel('Y Position (mm)')
-    ax3.set_zlabel('Z Position (mm)')
-    ax3.view_init(elev=30, azim=30)
- 
-    ax4 = s_param_fig.add_subplot(224, projection = '3d')
-    ax4.set_title('S22')
-    ax4.set_xlabel('X Position (mm)')
-    ax4.set_ylabel('Y Position (mm)')
-    ax4.set_zlabel('Z Position (mm)')
-    ax4.view_init(elev=30, azim=30)
+#     s_param_fig=plt.figure(1)
+# #     plt.ion()
+# #     plt.show()
+#     s_param_fig.tight_layout(pad=3.0)
+#     ax1 = s_param_fig.add_subplot(221, projection = '3d')
+#     ax1.set_title('S11')
+#     ax1.set_xlabel('X Position (mm)')
+#     ax1.set_ylabel('Y Position (mm)')
+#     ax1.set_zlabel('Z Position (mm)')
+#     ax1.view_init(elev=30, azim=30)
+#  
+#     ax2 = s_param_fig.add_subplot(222, projection = '3d')
+#     ax2.set_title('S12')
+#     ax2.set_xlabel('X Position (mm)')
+#     ax2.set_ylabel('Y Position (mm)')
+#     ax2.set_zlabel('Z Position (mm)')
+#     ax2.view_init(elev=30, azim=30)
+#      
+#     ax3 = s_param_fig.add_subplot(223, projection = '3d')
+#     ax3.set_title('S21')
+#     ax3.set_xlabel('X Position (mm)')
+#     ax3.set_ylabel('Y Position (mm)')
+#     ax3.set_zlabel('Z Position (mm)')
+#     ax3.view_init(elev=30, azim=30)
+#  
+#     ax4 = s_param_fig.add_subplot(224, projection = '3d')
+#     ax4.set_title('S22')
+#     ax4.set_xlabel('X Position (mm)')
+#     ax4.set_ylabel('Y Position (mm)')
+#     ax4.set_zlabel('Z Position (mm)')
+#     ax4.view_init(elev=30, azim=30)
+    
+    fig = make_subplots(rows=2, cols=2, specs=[[{'type': 'scene'}, {'type': 'scene'}],
+           [{'type': 'scene'}, {'type': 'scene'}]])
     
 #     print("x_coords: {}".format(sampling_x_coordinates))
 #     print("y_coords: {}".format(sampling_y_coordinates))
@@ -803,26 +810,107 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                     s21_array = np.concatenate([s21_array, np.array([s21_logm])])
                     s22_array = np.concatenate([s22_array, np.array([s22_logm])])
                     #plotting 
-                    s_param_fig.clf()
+#                     s_param_fig.clf()
+# 
+# #                     ax1.cla()
+#                     ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
+# #                     ax1.imshow()
+#                     
+# #                     ax2.cla()
+#                     ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
+# #                     ax2.imshow()
+#                     
+# #                     ax3.cla()
+#                     ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
+# #                     ax3.imshow()
+#                      
+# #                     ax4.cla()
+#                     ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet') 
+# #                     ax4.imshow()
+#           
+# #                     plt.draw()
+#                     plt.pause(0.01)
+                    fig.data = []
+                    
+                    marker_data_1 = go.Scatter3d(
+                        x=x_coords, 
+                        y=y_coords, 
+                        z=z_coords,
+                        opacity=0.6,
+                        mode='markers',
+                        marker=dict(
+                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+                            color= s11_array, # [np.min(z_temp), np.max(z_temp)], 
+                            colorscale='jet', 
+                            colorbar=dict(thickness=10,
+                                          len = 0.5,
+                                          x = 0.35,
+                                          y = 0.8),
+                            showscale=True,
+                        )    
+                    )
+                    
+                    marker_data_2 = go.Scatter3d(
+                        x=x_coords, 
+                        y=y_coords, 
+                        z=z_coords,
+                        opacity=0.6,
+                        mode='markers',
+                        marker=dict(
+                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+                            color= s12_array, # [np.min(z_temp), np.max(z_temp)], 
+                            colorscale='jet', 
+                            colorbar=dict(thickness=10,
+                                  len = 0.5,
+                                  x = 0.9,
+                                  y = 0.8),  
+                            showscale=True,
+                        )    
+                    )
+                                        
+                    marker_data_3 = go.Scatter3d(
+                        x=x_coords, 
+                        y=y_coords, 
+                        z=z_coords,
+                        opacity=0.6,
+                        mode='markers',
+                        marker=dict(
+                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+                            color= s21_array, # [np.min(z_temp), np.max(z_temp)], 
+                            colorscale='jet', 
+                            colorbar=dict(thickness=10,
+                                          len = 0.5,
+                                          x = 0.35,
+                                          y = 0.20),
+                            showscale=True,
+                        )    
+                    )
 
-#                     ax1.cla()
-                    ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
-#                     ax1.imshow()
+                    marker_data_4 = go.Scatter3d(
+                        x=x_coords, 
+                        y=y_coords, 
+                        z=z_coords,
+                        opacity=0.6,
+                        mode='markers',
+                        marker=dict(
+                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+                            color= s22_array, # [np.min(z_temp), np.max(z_temp)], 
+                            colorscale='jet', 
+                            colorbar=dict(thickness=10,
+                                          len = 0.5,
+                                          x = 0.9,
+                                          y = 0.2), 
+                            showscale=True,
+                        )    
+                    )
+
+                    fig.add_trace(marker_data_1, row=1, col=1)
+                    fig.add_trace(marker_data_2, row=1, col=2)
+                    fig.add_trace(marker_data_3, row=2, col=1)
+                    fig.add_trace(marker_data_4, row=2, col=2)
                     
-#                     ax2.cla()
-                    ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
-#                     ax2.imshow()
-                    
-#                     ax3.cla()
-                    ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
-#                     ax3.imshow()
-                     
-#                     ax4.cla()
-                    ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet') 
-#                     ax4.imshow()
-          
-#                     plt.draw()
-                    plt.pause(0.01)
+                    fig.update_layout(height=700, showlegend=False)
+                    fig.show()
     
     # Return to Relative Home
     manual_z_entry_txt.set(str(0.0))
@@ -1020,41 +1108,122 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                     measurements['s22_im'].append(s22_im)
 
                     measurements['b_field'].append(b_field) # B field from S21 as recorded by the Beehive 100b
+                    
+                    fig.data = []
+                    
+                    marker_data_1 = go.Scatter3d(
+                        x=x_coords, 
+                        y=y_coords, 
+                        z=z_coords,
+                        opacity=0.6,
+                        mode='markers',
+                        marker=dict(
+                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+                            color= s11_array, # [np.min(z_temp), np.max(z_temp)], 
+                            colorscale='jet', 
+                            colorbar=dict(thickness=10,
+                                          len = 0.5,
+                                          x = 0.35,
+                                          y = 0.8),
+                            showscale=True,
+                        )    
+                    )
+                    
+                    marker_data_2 = go.Scatter3d(
+                        x=x_coords, 
+                        y=y_coords, 
+                        z=z_coords,
+                        opacity=0.6,
+                        mode='markers',
+                        marker=dict(
+                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+                            color= s12_array, # [np.min(z_temp), np.max(z_temp)], 
+                            colorscale='jet', 
+                            colorbar=dict(thickness=10,
+                                  len = 0.5,
+                                  x = 0.9,
+                                  y = 0.8),  
+                            showscale=True,
+                        )    
+                    )
+                                        
+                    marker_data_3 = go.Scatter3d(
+                        x=x_coords, 
+                        y=y_coords, 
+                        z=z_coords,
+                        opacity=0.6,
+                        mode='markers',
+                        marker=dict(
+                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+                            color= s21_array, # [np.min(z_temp), np.max(z_temp)], 
+                            colorscale='jet', 
+                            colorbar=dict(thickness=10,
+                                          len = 0.5,
+                                          x = 0.35,
+                                          y = 0.20),
+                            showscale=True,
+                        )    
+                    )
 
-                	coil_od = float(od_vol_coil_h_entry_txt.get())
-                	plot_list = [0, coil_od/10.0, coil_od/5.0, coil_od/2.0, coil_od, coil_od*3/2.0, coil_od*2.0, coil_od*5/2.0, coil_od*3.0]
+                    marker_data_4 = go.Scatter3d(
+                        x=x_coords, 
+                        y=y_coords, 
+                        z=z_coords,
+                        opacity=0.6,
+                        mode='markers',
+                        marker=dict(
+                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+                            color= s22_array, # [np.min(z_temp), np.max(z_temp)], 
+                            colorscale='jet', 
+                            colorbar=dict(thickness=10,
+                                          len = 0.5,
+                                          x = 0.9,
+                                          y = 0.2), 
+                            showscale=True,
+                        )    
+                    )
+
+                    fig.add_trace(marker_data_1, row=1, col=1)
+                    fig.add_trace(marker_data_2, row=1, col=2)
+                    fig.add_trace(marker_data_3, row=2, col=1)
+                    fig.add_trace(marker_data_4, row=2, col=2)
+                    
+                    fig.update_layout(height=700, showlegend=False)
+                    fig.show()
+                    coil_od = float(od_vol_coil_h_entry_txt.get())
+                    plot_list = [0, coil_od/10.0, coil_od/5.0, coil_od/2.0, coil_od, coil_od*3/2.0, coil_od*2.0, coil_od*5/2.0, coil_od*3.0]                   
                     if (z_coord != _z_coord) or (z_coord == sampling_z_coordinates[0] and abs(x_coord) in plot_list): # only plot when z_coord changes or during the first layer
                         # Recording data
           #               with open(save_file_name, 'a') as f:
     						# df.to_csv(f, mode='a', header=f.tell()==0)
-						with open(save_file_name+"_df.csv", "w") as f:
-    						df.to_csv(f)        
+                        with open(save_file_name+"_df.csv", "w") as f:
+                            df.to_csv(f)        
 
-                        if(meas_count != 0):
-                            colorbar1.remove()
-                            colorbar2.remove()
-                            colorbar3.remove()
-                            colorbar4.remove()
+#                         if(meas_count != 0):
+#                             colorbar1.remove()
+#                             colorbar2.remove()
+#                             colorbar3.remove()
+#                             colorbar4.remove()
 
-                        s_param_fig.clf()
-                        
-                        ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
-                        colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
-                        colorbar1.set_label('dB')
-                        
-                        ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
-                        colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
-                        colorbar2.set_label('dB')
-                        
-                        ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
-                        colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
-                        colorbar3.set_label('dB')
-                        
-                        ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet')
-                        colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
-                        colorbar4.set_label('dB')    
-                        
-                        plt.pause(0.01)
+#                         s_param_fig.clf()
+#                         
+#                         ps11 = ax1.scatter(x_coords, y_coords, z_coords, c = s11_array, cmap = 'jet')
+#                         colorbar1 = plt.colorbar(ps11, ax = ax1, pad = 0.3)
+#                         colorbar1.set_label('dB')
+#                         
+#                         ps12 = ax2.scatter(x_coords,y_coords, z_coords, c = s12_array, cmap = 'jet')
+#                         colorbar2 = plt.colorbar(ps12, ax = ax2, pad = 0.3)
+#                         colorbar2.set_label('dB')
+#                         
+#                         ps21 = ax3.scatter(x_coords,y_coords, z_coords, c = s21_array, cmap = 'jet')
+#                         colorbar3 = plt.colorbar(ps21, ax = ax3, pad = 0.3)
+#                         colorbar3.set_label('dB')
+#                         
+#                         ps22 = ax4.scatter(x_coords,y_coords, z_coords, c = s22_array, cmap = 'jet')
+#                         colorbar4 = plt.colorbar(ps22, ax = ax4, pad = 0.3)
+#                         colorbar4.set_label('dB')    
+#                         
+#                         plt.pause(0.01)
                         
                         _z_coord = z_coord
                     
