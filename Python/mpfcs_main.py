@@ -26,13 +26,47 @@ import tkinter as tk
 import matplotlib.pyplot as plt 
 from mpl_toolkits.mplot3d import Axes3D
 
+import plotly
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.offline
+import plotly.io 
 
 from Frontend.mpfcs_gui_button_functions import submit_values, vna_buttons_reset
 from Backend.mpfcs_vna import vna_init, vna_record#, vna_q_calc
 from Backend.mpfcs_tp_head import tp_head_tilt, tp_head_pan, tp_head_resets, tp_usecs_2_deg
 from Backend.mpfcs_mpcnc import mpcnc_move_xyz, mpcnc_pause, mpcnc_home_xyz, mpcnc_pos_read, marlin_readline_startup
+
+# #####
+# import os, sys
+# from PyQt5.QtWidgets import QApplication
+# from PyQt5.QtCore import QUrl
+# from PyQt5 import QtWebEngineWidgets
+# from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView,QWebEnginePage as QWebPage
+
+
+# class PlotlyViewer(QtWebEngineWidgets.QWebEngineView):
+#     def __init__(self, fig, exec=True):
+#         # Create a QApplication instance or use the existing one if it exists
+#         self.app = QApplication.instance() if QApplication.instance() else QApplication(sys.argv)
+
+#         super().__init__()
+
+#         self.file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "temp.html"))
+#         plotly.offline.plot(fig, filename=self.file_path, auto_open=False)
+#         self.load(QUrl.fromLocalFile(self.file_path))
+#         self.setWindowTitle("Plotly Viewer")
+#         self.show()
+
+#         # if exec:
+#         #     self.app.exec_()
+
+#     def closeEvent(self, event):
+#     	os.remove(self.file_path)
+
+
+# win = PlotlyViewer(fig)
+####
 
 emergency_stop_triggered = False
 
@@ -765,13 +799,13 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
 #     ax4.set_ylabel('Y Position (mm)')
 #     ax4.set_zlabel('Z Position (mm)')
 #     ax4.view_init(elev=30, azim=30)
-    
+    # plotly.offline.init_notebook_mode(connected=True)
     fig = make_subplots(rows=2, cols=2, specs=[[{'type': 'scene'}, {'type': 'scene'}],
            [{'type': 'scene'}, {'type': 'scene'}]])
-    
-#     print("x_coords: {}".format(sampling_x_coordinates))
-#     print("y_coords: {}".format(sampling_y_coordinates))
-#     print("z_coords: {}".format(sampling_z_coordinates))
+    plotly.offline.plot(fig,filename=filename_entry_txt.get()+'.html',auto_open=True)
+    print("x_coords: {}".format(sampling_x_coordinates))
+    print("y_coords: {}".format(sampling_y_coordinates))
+    print("z_coords: {}".format(sampling_z_coordinates))
 
     # Safety extent sweep and plot extent setup
     print("\n\n--------------------------")
@@ -831,7 +865,6 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
 # #                     plt.draw()
 #                     plt.pause(0.01)
                     fig.data = []
-                    
                     marker_data_1 = go.Scatter3d(
                         x=x_coords, 
                         y=y_coords, 
@@ -903,15 +936,21 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                             showscale=True,
                         )    
                     )
-
-                    fig.add_trace(marker_data_1, row=1, col=1)
-                    fig.add_trace(marker_data_2, row=1, col=2)
-                    fig.add_trace(marker_data_3, row=2, col=1)
-                    fig.add_trace(marker_data_4, row=2, col=2)
-                    
+                    fig.append_trace(marker_data_1, row=1, col=1)
+                    fig.append_trace(marker_data_2, row=1, col=2)
+                    fig.append_trace(marker_data_3, row=2, col=1)
+                    fig.append_trace(marker_data_4, row=2, col=2)
                     fig.update_layout(height=700, showlegend=False)
-                    fig.show()
-    
+                    # fig.show()
+                    # pyo.plot(fig)
+                    # iplot(fig)
+                    # pio.show(fig)
+                    plotly.offline.plot(fig,filename=filename_entry_txt.get()+'.html',auto_open=False)
+                    # plotly.offline.plot(fig,show_link=False)
+                    # plotly.offline.iplot(fig)
+                    # PlotlyViewer(fig)
+                    
+
     # Return to Relative Home
     manual_z_entry_txt.set(str(0.0))
     manual_y_entry_txt.set(str(0.0))
@@ -1110,7 +1149,6 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                     measurements['b_field'].append(b_field) # B field from S21 as recorded by the Beehive 100b
                     
                     fig.data = []
-                    
                     marker_data_1 = go.Scatter3d(
                         x=x_coords, 
                         y=y_coords, 
@@ -1182,14 +1220,13 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                             showscale=True,
                         )    
                     )
-
-                    fig.add_trace(marker_data_1, row=1, col=1)
-                    fig.add_trace(marker_data_2, row=1, col=2)
-                    fig.add_trace(marker_data_3, row=2, col=1)
-                    fig.add_trace(marker_data_4, row=2, col=2)
-                    
+                    fig.append_trace(marker_data_1, row=1, col=1)
+                    fig.append_trace(marker_data_2, row=1, col=2)
+                    fig.append_trace(marker_data_3, row=2, col=1)
+                    fig.append_trace(marker_data_4, row=2, col=2)
                     fig.update_layout(height=700, showlegend=False)
-                    fig.show()
+                    plotly.offline.plot(fig,filename=filename_entry_txt.get()+'.html',auto_open=False)
+
                     coil_od = float(od_vol_coil_h_entry_txt.get())
                     plot_list = [0, coil_od/10.0, coil_od/5.0, coil_od/2.0, coil_od, coil_od*3/2.0, coil_od*2.0, coil_od*5/2.0, coil_od*3.0]                   
                     if (z_coord != _z_coord) or (z_coord == sampling_z_coordinates[0] and abs(x_coord) in plot_list): # only plot when z_coord changes or during the first layer
@@ -1197,7 +1234,8 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
           #               with open(save_file_name, 'a') as f:
     						# df.to_csv(f, mode='a', header=f.tell()==0)
                         with open(save_file_name+"_df.csv", "w") as f:
-                            df.to_csv(f)        
+                            df.to_csv(f)  
+                        # fig.show()      
 
 #                         if(meas_count != 0):
 #                             colorbar1.remove()
