@@ -98,9 +98,11 @@ marker_data_4 = go.Scatter3d(
     )    
 )
 
-fig = make_subplots(rows=2, cols=2,
+import plotly.graph_objects as go
+
+fig = go.FigureWidget(make_subplots(rows=2, cols=2,
                     specs=[[{'type': 'scene'}, {'type': 'scene'}],
-           [{'type': 'scene'}, {'type': 'scene'}]])
+           [{'type': 'scene'}, {'type': 'scene'}]]))
 
 fig.add_trace(marker_data_1, row=1, col=1)
 fig.add_trace(marker_data_2, row=1, col=2)
@@ -109,5 +111,5 @@ fig.add_trace(marker_data_4, row=2, col=2)
 
 
 fig.update_layout(height=700, showlegend=False)
-fig.show()
+fig
 
