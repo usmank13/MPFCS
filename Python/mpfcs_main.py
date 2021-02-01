@@ -494,7 +494,12 @@ def handler_od_vol_setup():
     print("y_coords: {}".format(sampling_y_coordinates))
     print("z_coords: {}".format(sampling_z_coordinates))
     
-    print("Len: {}| hrs: {}".format(len(sampling_x_coordinates), 4*len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)/3600))
+    move_dur = 2.5
+    s_param_count = 8
+    s_param_meas_dur = 0.2
+    rec_dur = 0.001
+    average_meas_dur = move_dur+ s_param_count*s_param_meas_dur+rec_dur
+    print("Len: {}| hrs: {}".format(len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates), average_meas_dur*len(sampling_x_coordinates)*len(sampling_y_coordinates)*len(sampling_z_coordinates)/3600))
     # print("Len: {}| hrs: {}".format(len(sampling_x_coordinates), 11*4*len(sampling_x_coordinates)/3600))
 
 
@@ -1187,85 +1192,6 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                     measurements['s22_im'].append(s22_im)
 
                     measurements['b_field'].append(b_field) # B field from S21 as recorded by the Beehive 100b
-                    
-                    fig.data = []
-                    marker_data_1 = go.Scatter3d(
-                        x=x_coords, 
-                        y=y_coords, 
-                        z=z_coords,
-                        opacity=0.6,
-                        mode='markers',
-                        marker=dict(
-                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
-                            color= s11_array, # [np.min(z_temp), np.max(z_temp)], 
-                            colorscale='jet', 
-                            colorbar=dict(thickness=10,
-                                          len = 0.5,
-                                          x = 0.35,
-                                          y = 0.8),
-                            showscale=True,
-                        )    
-                    )
-                    
-                    marker_data_2 = go.Scatter3d(
-                        x=x_coords, 
-                        y=y_coords, 
-                        z=z_coords,
-                        opacity=0.6,
-                        mode='markers',
-                        marker=dict(
-                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
-                            color= s12_array, # [np.min(z_temp), np.max(z_temp)], 
-                            colorscale='jet', 
-                            colorbar=dict(thickness=10,
-                                  len = 0.5,
-                                  x = 0.9,
-                                  y = 0.8),  
-                            showscale=True,
-                        )    
-                    )
-                                        
-                    marker_data_3 = go.Scatter3d(
-                        x=x_coords, 
-                        y=y_coords, 
-                        z=z_coords,
-                        opacity=0.6,
-                        mode='markers',
-                        marker=dict(
-                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
-                            color= s21_array, # [np.min(z_temp), np.max(z_temp)], 
-                            colorscale='jet', 
-                            colorbar=dict(thickness=10,
-                                          len = 0.5,
-                                          x = 0.35,
-                                          y = 0.20),
-                            showscale=True,
-                        )    
-                    )
-
-                    marker_data_4 = go.Scatter3d(
-                        x=x_coords, 
-                        y=y_coords, 
-                        z=z_coords,
-                        opacity=0.6,
-                        mode='markers',
-                        marker=dict(
-                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
-                            color= s22_array, # [np.min(z_temp), np.max(z_temp)], 
-                            colorscale='jet', 
-                            colorbar=dict(thickness=10,
-                                          len = 0.5,
-                                          x = 0.9,
-                                          y = 0.2), 
-                            showscale=True,
-                        )    
-                    )
-                    fig.append_trace(marker_data_1, row=1, col=1)
-                    fig.append_trace(marker_data_2, row=1, col=2)
-                    fig.append_trace(marker_data_3, row=2, col=1)
-                    fig.append_trace(marker_data_4, row=2, col=2)
-                    fig.update_layout(height=700, showlegend=False)
-                    plotly.offline.plot(fig,filename=filename_entry_txt.get()+'.html',auto_open=False)
 
                     coil_od = float(od_vol_coil_h_entry_txt.get())
                     plot_list = [0, coil_od/10.0, coil_od/5.0, coil_od/2.0, coil_od, coil_od*3/2.0, coil_od*2.0, coil_od*5/2.0, coil_od*3.0]                   
@@ -1273,8 +1199,88 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                         # Recording data
           #               with open(save_file_name, 'a') as f:
     						# df.to_csv(f, mode='a', header=f.tell()==0)
-                        with open(save_file_name+"_df.csv", "w") as f:
-                            df.to_csv(f)  
+						if (z_coord != _z_coord)
+	                        with open(save_file_name+"_df.csv", "w") as f:
+	                            df.to_csv(f)  
+
+                        fig.data = []
+	                    marker_data_1 = go.Scatter3d(
+	                        x=x_coords, 
+	                        y=y_coords, 
+	                        z=z_coords,
+	                        opacity=0.6,
+	                        mode='markers',
+	                        marker=dict(
+	                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+	                            color= s11_array, # [np.min(z_temp), np.max(z_temp)], 
+	                            colorscale='jet', 
+	                            colorbar=dict(thickness=10,
+	                                          len = 0.5,
+	                                          x = 0.35,
+	                                          y = 0.8),
+	                            showscale=True,
+	                        )    
+	                    )
+	                    
+	                    marker_data_2 = go.Scatter3d(
+	                        x=x_coords, 
+	                        y=y_coords, 
+	                        z=z_coords,
+	                        opacity=0.6,
+	                        mode='markers',
+	                        marker=dict(
+	                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+	                            color= s12_array, # [np.min(z_temp), np.max(z_temp)], 
+	                            colorscale='jet', 
+	                            colorbar=dict(thickness=10,
+	                                  len = 0.5,
+	                                  x = 0.9,
+	                                  y = 0.8),  
+	                            showscale=True,
+	                        )    
+	                    )
+	                                        
+	                    marker_data_3 = go.Scatter3d(
+	                        x=x_coords, 
+	                        y=y_coords, 
+	                        z=z_coords,
+	                        opacity=0.6,
+	                        mode='markers',
+	                        marker=dict(
+	                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+	                            color= s21_array, # [np.min(z_temp), np.max(z_temp)], 
+	                            colorscale='jet', 
+	                            colorbar=dict(thickness=10,
+	                                          len = 0.5,
+	                                          x = 0.35,
+	                                          y = 0.20),
+	                            showscale=True,
+	                        )    
+	                    )
+
+	                    marker_data_4 = go.Scatter3d(
+	                        x=x_coords, 
+	                        y=y_coords, 
+	                        z=z_coords,
+	                        opacity=0.6,
+	                        mode='markers',
+	                        marker=dict(
+	                            size=3, #(np.max(z_temp)-np.min(z_temp))/100, 
+	                            color= s22_array, # [np.min(z_temp), np.max(z_temp)], 
+	                            colorscale='jet', 
+	                            colorbar=dict(thickness=10,
+	                                          len = 0.5,
+	                                          x = 0.9,
+	                                          y = 0.2), 
+	                            showscale=True,
+	                        )    
+	                    )
+	                    fig.append_trace(marker_data_1, row=1, col=1)
+	                    fig.append_trace(marker_data_2, row=1, col=2)
+	                    fig.append_trace(marker_data_3, row=2, col=1)
+	                    fig.append_trace(marker_data_4, row=2, col=2)
+	                    fig.update_layout(height=700, showlegend=False)
+	                    plotly.offline.plot(fig,filename=filename_entry_txt.get()+'.html',auto_open=False)
                         # fig.show()      
 
 #                         if(meas_count != 0):
@@ -1324,7 +1330,7 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                     hrs_mins_secs_remaining = datetime.timedelta(0, time_remaining)
                  
 
-            print("% Complete: {}%| Time Remaining: {}".format(percent_complete, hrs_mins_secs_remaining))
+            print("Meas. #:{}| % Complete: {}%| Time Remaining: {}".format(meas_count, percent_complete, hrs_mins_secs_remaining))
             print("Avg. Duration: Move={}s| VNA={}s| Record={}s".format(round(mpcnc_move_avg_dur,3), round(vna_read_avg_dur,3), round(data_record_avg_dur,3)))
     
     manual_x_entry_txt.set(str(round(0,3)))
