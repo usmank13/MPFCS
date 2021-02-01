@@ -426,29 +426,48 @@ def handler_od_vol_setup():
     min_step = float(od_vol_min_step_entry_txt.get())
 
     mult = np.rint(BED_SIZE_X/2)
-    while pos < 0:     
-        _pos = pos + mult*min_step
-        # print("_pos: {}|(mult-1)*od_vol_r: {}".format(_pos, (mult-1)*od_vol_r))
-    #     if _pos == 0:
-    #         break;
-    #     if np.abs(_pos) < (mult-1)*critical_coupling_r and mult > 1:
-    #         mult -= 1
-    #     else:
-    #         pos += mult*min_step 
-    #         sampling_x_coordinates.append(pos)
-    #         sampling_y_coordinates.append(pos)
-    #         sampling_z_coordinates.append(pos)     
-        # if _pos >= 0 and (mult-1)*od_vol_r == 0:
-        #     break;
-        if np.abs(_pos) < (mult-1)*od_vol_r and mult > 1:
-            mult -= 1
-        else:
-            pos += mult*min_step
-            if pos < 0:
-                sampling_x_coordinates.append(np.around(pos, decimals=1))
-                sampling_y_coordinates.append(np.around(pos, decimals=1))
-                sampling_z_coordinates.append(np.around(pos, decimals=1))   
-            # print("Here:{}|{}".format(pos, mult))
+	while pos < 0:     
+            _pos = pos + mult*min_step
+            # print("_pos: {}|(mult-1)*od_vol_r: {}".format(_pos, (mult-1)*od_vol_r))
+        #     if _pos == 0:
+        #         break;
+        #     if np.abs(_pos) < (mult-1)*critical_coupling_r and mult > 1:
+        #         mult -= 1
+        #     else:
+        #         pos += mult*min_step 
+        #         sampling_x_coordinates.append(pos)
+        #         sampling_y_coordinates.append(pos)
+        #         sampling_z_coordinates.append(pos)     
+            # if _pos >= 0 and (mult-1)*od_vol_r == 0:
+            #     break;
+            if np.abs(_pos) < (mult-1)*od_vol_r and mult > 1:
+                mult -= 1
+            else:
+                pos += mult*min_step
+                if pos < 0:
+                    sampling_x_coordinates.append(np.around(pos, decimals=1))
+                    sampling_y_coordinates.append(np.around(pos, decimals=1)) 
+
+        while pos < 0:     
+            _pos = pos + mult*min_step
+            # print("_pos: {}|(mult-1)*od_vol_r: {}".format(_pos, (mult-1)*od_vol_r))
+        #     if _pos == 0:
+        #         break;
+        #     if np.abs(_pos) < (mult-1)*critical_coupling_r and mult > 1:
+        #         mult -= 1
+        #     else:
+        #         pos += mult*min_step 
+        #         sampling_x_coordinates.append(pos)
+        #         sampling_y_coordinates.append(pos)
+        #         sampling_z_coordinates.append(pos)     
+            # if _pos >= 0 and (mult-1)*od_vol_r == 0:
+            #     break;
+            if np.abs(_pos) < (mult-1)*od_vol_r*2 and mult > 1:
+                mult -= 1
+            else:
+                pos += mult*min_step
+                if pos < 0:
+                    sampling_z_coordinates.append(np.around(pos, decimals=1))
         
     # print("#1:{}".format(sampling_x_coordinates))
     
@@ -684,8 +703,29 @@ def mpfcs_run(reset_VNA,start_btn,mpcnc_vol_length_entry_txt,mpcnc_vol_width_ent
                 pos += mult*min_step
                 if pos < 0:
                     sampling_x_coordinates.append(np.around(pos, decimals=1))
-                    sampling_y_coordinates.append(np.around(pos, decimals=1))
+                    sampling_y_coordinates.append(np.around(pos, decimals=1)) 
+
+        while pos < 0:     
+            _pos = pos + mult*min_step
+            # print("_pos: {}|(mult-1)*od_vol_r: {}".format(_pos, (mult-1)*od_vol_r))
+        #     if _pos == 0:
+        #         break;
+        #     if np.abs(_pos) < (mult-1)*critical_coupling_r and mult > 1:
+        #         mult -= 1
+        #     else:
+        #         pos += mult*min_step 
+        #         sampling_x_coordinates.append(pos)
+        #         sampling_y_coordinates.append(pos)
+        #         sampling_z_coordinates.append(pos)     
+            # if _pos >= 0 and (mult-1)*od_vol_r == 0:
+            #     break;
+            if np.abs(_pos) < (mult-1)*od_vol_r*2 and mult > 1:
+                mult -= 1
+            else:
+                pos += mult*min_step
+                if pos < 0:
                     sampling_z_coordinates.append(np.around(pos, decimals=1))   
+
                 # print("Here:{}|{}".format(pos, mult))
             
         # print("#1:{}".format(sampling_x_coordinates))
